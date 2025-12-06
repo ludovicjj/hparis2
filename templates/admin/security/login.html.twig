@@ -1,0 +1,71 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Connexion - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div class="w-full max-w-md px-6">
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/10">
+                <!-- Logo / Title -->
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Hollywood Paris</h1>
+                    <p class="text-gray-400">Administration</p>
+                </div>
+
+                {% if error %}
+                    <div class="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6">
+                        {{ error.messageKey|trans(error.messageData, 'security') }}
+                    </div>
+                {% endif %}
+
+                <form method="post" class="space-y-6">
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-gray-300 mb-2">Email</label>
+                        <input type="email"
+                               value="{{ last_username }}"
+                               name="_username"
+                               id="username"
+                               class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                               autocomplete="email"
+                               required
+                               autofocus
+                               placeholder="votre@email.com">
+                    </div>
+
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-gray-300 mb-2">Mot de passe</label>
+                        <input type="password"
+                               name="_password"
+                               id="password"
+                               class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                               autocomplete="current-password"
+                               required
+                               placeholder="••••••••">
+                    </div>
+
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+                    <div class="flex items-center">
+                        <input type="checkbox"
+                               name="_remember_me"
+                               id="_remember_me"
+                               class="w-4 h-4 bg-white/5 border-white/10 rounded focus:ring-purple-500 focus:ring-2">
+                        <label for="_remember_me" class="ml-2 text-sm text-gray-300">Se souvenir de moi</label>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all">
+                        Se connecter
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <a href="{{ path('app_front_home') }}" class="text-gray-400 hover:text-white text-sm transition">
+                        &larr; Retour au site
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}

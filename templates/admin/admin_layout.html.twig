@@ -1,0 +1,33 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block body %}
+    <div class="flex min-h-screen bg-slate-800">
+        {% include 'admin/partials/_sidebar.html.twig' %}
+
+        <div class="flex-grow flex flex-col">
+            <!-- Header -->
+            <header class="h-16 bg-slate-900 border-b border-slate-700 flex items-center justify-between px-6">
+                <h1 class="text-xl font-semibold text-white">{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="flex items-center space-x-4">
+                    <a href="{{ path('app_front_home') }}" class="text-slate-400 hover:text-white transition text-sm">
+                        Voir le site &rarr;
+                    </a>
+                </div>
+            </header>
+
+            <!-- Flash messages -->
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="mx-6 mt-6 px-4 py-3 rounded-lg {% if type == 'success' %}bg-green-600/20 border border-green-600 text-green-400{% elseif type == 'error' %}bg-red-600/20 border border-red-600 text-red-400{% else %}bg-blue-600/20 border border-blue-600 text-blue-400{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <!-- Content -->
+            <main class="flex-grow p-6">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+{% endblock %}
