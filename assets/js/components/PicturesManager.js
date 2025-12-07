@@ -23,10 +23,12 @@ export class PicturesManager {
         this.count = document.getElementById('upload-count');
         this.status = document.getElementById('upload-status');
 
-        // tools
+        // Pictures container
         this.grid = document.getElementById('pictures-grid');
+
+        // Hidden field for track picture
         this.hiddenInput = document.getElementById('picture-ids');
-        this.pictureIds = []
+        this.pictureIds = this.hiddenInput.value ? this.hiddenInput.value.split(',').map(Number) : [];
 
         this.initDropzone()
     }
@@ -58,6 +60,9 @@ export class PicturesManager {
             await this.handleUpload(e.target.files);
             e.target.value = '';
         });
+
+         // Initialize Sortable after first image is added
+         this.initSortable();
     }
 
     async handleUpload(fileList) {
@@ -100,9 +105,6 @@ export class PicturesManager {
                     this.pictureIds.push(data.id);
                     console.log('Upload success ! Update hiddenField')
                     this.updateHiddenInput();
-
-                    // Initialize Sortable after first image is added
-                    this.initSortable();
                 } else {
                     console.error('Upload failed:', data.error);
                 }
@@ -182,7 +184,8 @@ export class PicturesManager {
 
     // Initialize Sortable for drag & drop reordering
     initSortable() {
-        if (!this.grid || this.sortableInstance) {
+        if (!this.grid) {
+            console.error('Grid container is missing')
             return;
         }
 

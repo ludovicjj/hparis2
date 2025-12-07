@@ -34,4 +34,12 @@ class GalleryRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function countAll(): int
+    {
+        return (int) $this->createQueryBuilder('g')
+            ->select('COUNT(g.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

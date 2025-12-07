@@ -50,6 +50,10 @@ readonly class PictureService
             return;
         }
 
+        // Filters Ids:
+        // - convert to array
+        // - transform array value : string to integer
+        // - filter array value : exclude falsy value
         $ids = array_filter(array_map('intval', explode(',', $pictureIds)));
         $pictures = $this->pictureRepository->findOrderedByIds($ids);
 
@@ -107,14 +111,30 @@ readonly class PictureService
     }
 
     /**
-     * Delete a picture and its file
+     * Delete a picture entity and its file
      */
     public function delete(Picture $picture): void
     {
+        // delete file
         $this->deleteFile($picture);
 
+        // delete entity
         $this->entityManager->remove($picture);
         $this->entityManager->flush();
+    }
+
+    public function deleteOrphanPictures(): int
+    {
+        $pictures = $this->pictureRepository->findUnattached();
+
+        foreach ($pictures as $picture) {
+            $this->deleteFile($picture);
+            $this->entityManager->remove($picture);
+        }
+
+        $this->entityManager->flush();
+
+        return count($pictures);
     }
 
     /**

@@ -7,59 +7,13 @@ use Symfony\Component\String\Slugger\SluggerInterface;
 
 class ImageUploadService
 {
-    private const ALLOWED_TYPES = ['jpg', 'jpeg', 'png'];
-    private const THUMBNAIL_MAX_WIDTH = 400;
-    private const THUMBNAIL_MAX_HEIGHT = 400;
+    private const array ALLOWED_TYPES = ['jpg', 'jpeg', 'png'];
+    private const int THUMBNAIL_MAX_WIDTH = 400;
+    private const int THUMBNAIL_MAX_HEIGHT = 400;
 
     public function __construct(
-        private readonly SluggerInterface $slugger,
         private readonly string $uploadDirectory,
     ) {
-    }
-
-    public function uploadPicture(UploadedFile $file): array
-    {
-        $this->validateFile($file);
-
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $extension = strtolower($file->guessExtension() ?? $file->getClientOriginalExtension());
-        $safeFilename = $this->slugger->slug($originalName);
-        $filename = $safeFilename . '-' . uniqid() . '.' . $extension;
-
-        $picturesDir = $this->uploadDirectory . '/galleries';
-        $this->ensureDirectoryExists($picturesDir);
-
-        $file->move($picturesDir, $filename);
-
-        return [
-            'filename' => $filename,
-            'originalName' => $file->getClientOriginalName(),
-            'type' => $extension,
-        ];
-    }
-
-    public function uploadThumbnail(UploadedFile $file): array
-    {
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $extension = strtolower($file->guessExtension() ?? $file->getClientOriginalExtension());
-        $safeFilename = $this->slugger->slug($originalName);
-        $filename = $safeFilename . '-' . uniqid() . '.' . $extension;
-
-        $thumbnailsDir = $this->uploadDirectory . '/galleries/thumbnails';
-        $this->ensureDirectoryExists($thumbnailsDir);
-
-        // Déplacer le fichier temporairement
-        $tempPath = $file->getPathname();
-        $targetPath = $thumbnailsDir . '/' . $filename;
-
-        // Créer une miniature redimensionnée
-        $this->createResizedImage($tempPath, $targetPath, $extension);
-
-        return [
-            'filename' => $filename,
-            'originalName' => $file->getClientOriginalName(),
-            'type' => $extension,
-        ];
     }
 
     public function deletePicture(string $filename): void
@@ -75,17 +29,6 @@ class ImageUploadService
         $path = $this->uploadDirectory . '/galleries/thumbnails/' . $filename;
         if (file_exists($path)) {
             unlink($path);
-        }
-    }
-
-    private function validateFile(UploadedFile $file): void
-    {
-        $extension = strtolower($file->guessExtension() ?? $file->getClientOriginalExtension());
-
-        if (!in_array($extension, self::ALLOWED_TYPES, true)) {
-            throw new \InvalidArgumentException(
-                sprintf('Type de fichier non autorisé. Types acceptés : %s', implode(', ', self::ALLOWED_TYPES))
-            );
         }
     }
 

@@ -18,6 +18,12 @@ readonly class ThumbnailService
     ) {
     }
 
+    /**
+     * Handle Thumbnail File when user create or update one gallery
+     *
+     * @param FormInterface $form
+     * @return void
+     */
     public function handle(FormInterface $form): void
     {
         /** @var Gallery $gallery */
@@ -37,7 +43,7 @@ readonly class ThumbnailService
         $thumbnail = $gallery->getThumbnail();
         if ($thumbnail) {
             // Clear odl thumbnail file
-            $this->delete($thumbnail);
+            $this->deleteFile($thumbnail);
         } else {
             $thumbnail = new Thumbnail();
             $gallery->setThumbnail($thumbnail);
@@ -53,7 +59,10 @@ readonly class ThumbnailService
         $file->move($thumbnailDir, $filename);
     }
 
-    public function delete(Thumbnail $thumbnail): void
+    /**
+     * Delete only the file (not the entity)
+     */
+    public function deleteFile(Thumbnail $thumbnail): void
     {
         $path = $this->uploadDirectory . '/thumbnails/' . $thumbnail->getFilename();
 

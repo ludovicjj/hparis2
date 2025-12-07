@@ -6,7 +6,6 @@ use App\Entity\Gallery;
 use App\Form\GalleryType;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
-use App\Service\ImageUploadService;
 use App\Service\PictureService;
 use App\Service\ThumbnailService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -18,18 +17,20 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/gallery', name: 'app_admin_gallery_')]
 class GalleryController extends AbstractController
 {
-    public function __construct(
-        private readonly ImageUploadService $uploadService,
-    ) {
-    }
-
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(GalleryRepository $galleryRepository): Response
-    {
+    public function index(
+        GalleryRepository $galleryRepository,
+        PictureService $pictureService,
+    ): Response {
         $galleries = $galleryRepository->findAllWithThumbnails();
+        $galleryCount = $galleryRepository->countAll();
+
+        // Clean Orphan picture created previously
+        $pictureService->deleteOrphanPictures();
 
         return $this->render('admin/gallery/index.html.twig', [
             'galleries' => $galleries,
+            'galleryCount' => $galleryCount,
         ]);
     }
 
@@ -45,7 +46,10 @@ class GalleryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle Thumbnail from form data
             $thumbnailService->handle($form);
+
+            // Fetch and bind to Gallery all Pending Pictures into hidden field
             $pictureService->handle($form);
 
             $entityManager->persist($gallery);
@@ -53,7 +57,7 @@ class GalleryController extends AbstractController
 
             $this->addFlash('success', 'Galerie créée avec succès.');
 
-            return $this->redirectToRoute('app_admin_gallery_update', ['id' => $gallery->getId()]);
+            return $this->redirectToRoute('app_admin_gallery_index', ['id' => $gallery->getId()]);
         }
 
         return $this->render('admin/gallery/create.html.twig', [
@@ -67,42 +71,57 @@ class GalleryController extends AbstractController
         Request $request,
         Gallery $gallery,
         EntityManagerInterface $entityManager,
-        ThumbnailService $thumbnailService,
         PictureRepository $pictureRepository,
+        ThumbnailService $thumbnailService,
+        PictureService $pictureService,
     ): Response {
         $pictures = $pictureRepository->findByGalleryAndOrderPosition($gallery);
+        $pictureIds = $pictureRepository->findIdsByGallery($gallery);
+
         $form = $this->createForm(GalleryType::class, $gallery);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle Thumbnail from form data
             $thumbnailService->handle($form);
+
+            $pictureService->handle($form);
+
             $entityManager->flush();
             $this->addFlash('success', 'Galerie modifiée avec succès.');
 
-            return $this->redirectToRoute('app_admin_gallery_update', ['id' => $gallery->getId()]);
+            return $this->redirectToRoute('app_admin_gallery_index', ['id' => $gallery->getId()]);
         }
 
         return $this->render('admin/gallery/update.html.twig', [
             'gallery' => $gallery,
             'form' => $form,
-            'pictures' => $pictures
+            'pictures' => $pictures,
+            'pictureIds' => $pictureIds,
         ]);
     }
 
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
-    public function delete(Request $request, Gallery $gallery, EntityManagerInterface $entityManager): Response
+    public function delete(
+        Request $request,
+        Gallery $gallery,
+        EntityManagerInterface $entityManager,
+        PictureService $pictureService,
+        ThumbnailService $thumbnailService
+    ): Response
     {
         if ($this->isCsrfTokenValid('delete' . $gallery->getId(), $request->request->get('_token'))) {
-            // Supprimer la thumbnail
+            // Remove la thumbnail
             if ($gallery->getThumbnail()) {
-                $this->uploadService->deleteThumbnail($gallery->getThumbnail()->getFilename());
+                $thumbnailService->deleteFile($gallery->getThumbnail());
             }
 
-            // Supprimer les pictures
+            // Remove pictures
             foreach ($gallery->getPictures() as $picture) {
-                $this->uploadService->deletePicture($picture->getFilename());
+                $pictureService->deleteFile($picture);
             }
 
+            // Will delete Thumbnail + Pictures (cascade)
             $entityManager->remove($gallery);
             $entityManager->flush();
 
