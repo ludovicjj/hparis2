@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Gallery;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
@@ -41,6 +42,10 @@ class GalleryType extends AbstractType
                         mimeTypesMessage: 'Veuillez uploader une image JPG ou PNG',
                     ),
                 ],
+            ])
+            ->add('visibility', CheckboxType::class, [
+                'label' => 'Visibilité',
+                'required' => false,
             ]);
     }
 

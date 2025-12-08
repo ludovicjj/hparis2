@@ -19,6 +19,7 @@ class Gallery
     private ?int $id = null;
 
     #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
@@ -39,9 +40,13 @@ class Gallery
     #[ORM\OrderBy(['position' => 'ASC'])]
     private Collection $pictures;
 
+    #[ORM\Column(options: ['default' => true])]
+    private bool $visibility;
+
     public function __construct()
     {
         $this->pictures = new ArrayCollection();
+        $this->visibility = true;
     }
 
     #[ORM\PrePersist]
@@ -151,5 +156,16 @@ class Gallery
         $this->thumbnail = $thumbnail;
 
         return $this;
+    }
+
+    public function setVisibility(bool $visibility): static
+    {
+        $this->visibility = $visibility;
+        return $this;
+    }
+
+    public function isVisibility(): bool
+    {
+        return $this->visibility;
     }
 }

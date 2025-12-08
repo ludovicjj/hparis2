@@ -27,6 +27,15 @@
                         {{ form_widget(form.description, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition resize-none h-[166px]'}}) }}
                         {{ form_errors(form.description) }}
                     </div>
+
+                    {# Visibility Switch #}
+                    <div class="flex items-center gap-4">
+                        <span class="text-sm font-medium text-slate-300">{{ form_label(form.visibility, 'Gallerie public', {'label_attr': {'class': 'text-sm font-medium text-slate-300'}}) }}</span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            {{ form_widget(form.visibility, {'attr': {'class': 'sr-only peer'}}) }}
+                            <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                        </label>
+                    </div>
                 </div>
 
                 {# Thumbnail #}
