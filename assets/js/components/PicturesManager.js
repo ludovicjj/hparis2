@@ -103,7 +103,6 @@ export class PicturesManager {
                 if (data.success) {
                     this.addPictureToGrid(data);
                     this.pictureIds.push(data.id);
-                    console.log('Upload success ! Update hiddenField')
                     this.updateHiddenInput();
                 } else {
                     console.error('Upload failed:', data.error);
@@ -177,7 +176,6 @@ export class PicturesManager {
 
     updateHiddenInput() {
         if (this.hiddenInput) {
-            console.log(this.pictureIds)
             this.hiddenInput.value = this.pictureIds.join(',');
         }
     }

@@ -4,9 +4,11 @@ namespace App\Service;
 
 use App\Entity\Gallery;
 use App\Entity\Picture;
+use App\Entity\User;
 use App\Repository\PictureRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -25,6 +27,8 @@ readonly class PictureService
         private SluggerInterface $slugger,
         private Filesystem $filesystem,
         private EntityManagerInterface $entityManager,
+        private ImageOptimizerService $imageOptimizerService,
+        private Security $security,
         private string $uploadDirectory,
     ) {
     }
@@ -93,16 +97,28 @@ readonly class PictureService
      */
     public function upload(UploadedFile $file): Picture
     {
-        // Extract file info BEFORE moving (temp file will be deleted after move)
+        // Extract file info BEFORE processing
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
         $extension = strtolower($file->guessExtension() ?? $file->getClientOriginalExtension());
-        $filename = $this->generateFilename($originalName, $extension);
+        $filename = $this->generateUniqueFilename($originalName, $extension);
         $datePath = $this->getDatePath();
-        $relativePath = '/uploads/pictures/' . $datePath . '/' . $filename;
 
-        $this->moveFile($file, $datePath, $filename);
+        // Create Picture DIR
+        $picturesDir = $this->uploadDirectory . '/pictures/' . $datePath;
+        $this->filesystem->mkdir($picturesDir);
 
-        $picture = $this->createPicture($originalName, $extension, $filename, $relativePath);
+        // Create and Upload : lightbox (1200px) + thumbnail (400px)
+        $optimized = $this->imageOptimizerService->optimizePicture(
+            $file->getPathname(),
+            $picturesDir,
+            $filename
+        );
+
+        // Build path for picture
+        $relativePath = '/uploads/pictures/' . $datePath . '/' . $optimized['lightbox'];
+        $thumbnailRelativePath = '/uploads/pictures/' . $datePath . '/' . $optimized['thumbnail'];
+
+        $picture = $this->createPicture($originalName, $extension, $filename, $relativePath, $thumbnailRelativePath);
 
         $this->entityManager->persist($picture);
         $this->entityManager->flush();
@@ -123,9 +139,9 @@ readonly class PictureService
         $this->entityManager->flush();
     }
 
-    public function deleteOrphanPictures(): int
+    public function deleteOrphanPicturesByUser(User $user): int
     {
-        $pictures = $this->pictureRepository->findUnattached();
+        $pictures = $this->pictureRepository->findUnattachedByUser($user);
 
         foreach ($pictures as $picture) {
             $this->deleteFile($picture);
@@ -138,18 +154,27 @@ readonly class PictureService
     }
 
     /**
-     * Delete only the file (not the entity)
+     * Delete only the files (not the entity)
      */
     public function deleteFile(Picture $picture): void
     {
-        $absolutePath = $this->getAbsolutePath($picture);
-
+        // Delete lightbox image
+        $absolutePath = $this->getAbsolutePath($picture->getPath());
         if ($this->filesystem->exists($absolutePath)) {
             $this->filesystem->remove($absolutePath);
         }
+
+        // Delete thumbnail image
+        $thumbnailPath = $picture->getThumbnailPath();
+        if ($thumbnailPath) {
+            $absoluteThumbnailPath = $this->getAbsolutePath($thumbnailPath);
+            if ($this->filesystem->exists($absoluteThumbnailPath)) {
+                $this->filesystem->remove($absoluteThumbnailPath);
+            }
+        }
     }
 
-    private function generateFilename(string $originalName, string $extension): string
+    private function generateUniqueFilename(string $originalName, string $extension): string
     {
         $safeFilename = $this->slugger->slug($originalName);
 
@@ -168,21 +193,21 @@ readonly class PictureService
         $file->move($picturesDir, $filename);
     }
 
-    private function createPicture(string $originalName, string $extension, string $filename, string $relativePath): Picture
+    private function createPicture(string $originalName, string $extension, string $filename, string $relativePath, string $thumbnailPath): Picture
     {
-        $picture = new Picture();
-        $picture->setFilename($filename);
-        $picture->setOriginalName($originalName);
-        $picture->setPath($relativePath);
-        $picture->setType($extension);
-        $picture->setStatus(Picture::STATUS_PENDING);
-
-        return $picture;
+        return new Picture()
+            ->setFilename($filename)
+            ->setOriginalName($originalName)
+            ->setPath($relativePath)
+            ->setThumbnailPath($thumbnailPath)
+            ->setType($extension)
+            ->setStatus(Picture::STATUS_PENDING)
+            ->setCreatedBy($this->security->getUser());
     }
 
-    private function getAbsolutePath(Picture $picture): string
+    private function getAbsolutePath(string $relativePath): string
     {
-        $relativePath = ltrim($picture->getPath(), '/');
+        $relativePath = ltrim($relativePath, '/');
 
         return dirname($this->uploadDirectory) . '/' . $relativePath;
     }

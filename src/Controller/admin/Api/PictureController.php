@@ -41,7 +41,7 @@ class PictureController extends AbstractController
         return $this->json([
             'success' => true,
             'id' => $picture->getId(),
-            'path' => $picture->getPath(),
+            'path' => $picture->getThumbnailPath(),
             'originalName' => $picture->getOriginalName(),
         ]);
     }

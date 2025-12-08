@@ -22,6 +22,7 @@ Encore
      */
     .addEntry('app_common', './assets/js/app.js')
     .addEntry('admin_gallery', './assets/js/admin/gallery.js')
+    .addEntry('front_gallery', './assets/js/front/gallery.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()

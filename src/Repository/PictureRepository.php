@@ -4,6 +4,7 @@ namespace App\Repository;
 
 use App\Entity\Gallery;
 use App\Entity\Picture;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -59,12 +60,14 @@ class PictureRepository extends ServiceEntityRepository
             ->getSingleColumnResult();
     }
 
-    public function findUnattached(): array
+    public function findUnattachedByUser(User $user): array
     {
         return $this->createQueryBuilder('p')
             ->where('p.gallery IS NULL')
             ->andWhere('p.status = :status')
+            ->andWhere('p.createdBy = :user')
             ->setParameter('status', Picture::STATUS_PENDING)
+            ->setParameter('user', $user)
             ->getQuery()
             ->getResult();
     }
@@ -75,6 +78,31 @@ class PictureRepository extends ServiceEntityRepository
             ->select('COUNT(p.id)')
             ->andWhere('p.status = :status')
             ->setParameter('status', $status)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @return Picture[]
+     */
+    public function findByGalleryPaginated(Gallery $gallery, int $offset = 0, int $limit = 15): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.gallery = :gallery')
+            ->setParameter('gallery', $gallery)
+            ->orderBy('p.position', 'ASC')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countByGallery(Gallery $gallery): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->where('p.gallery = :gallery')
+            ->setParameter('gallery', $gallery)
             ->getQuery()
             ->getSingleScalarResult();
     }

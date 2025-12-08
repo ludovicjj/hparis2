@@ -3,6 +3,7 @@
 namespace App\Controller\admin\Gallery;
 
 use App\Entity\Gallery;
+use App\Entity\User;
 use App\Form\GalleryType;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
@@ -13,6 +14,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 #[Route('/admin/gallery', name: 'app_admin_gallery_')]
 class GalleryController extends AbstractController
@@ -21,12 +23,13 @@ class GalleryController extends AbstractController
     public function index(
         GalleryRepository $galleryRepository,
         PictureService $pictureService,
+        #[CurrentUser] User $user
     ): Response {
         $galleries = $galleryRepository->findAllWithThumbnails();
         $galleryCount = $galleryRepository->countAll();
 
         // Clean Orphan picture created previously
-        $pictureService->deleteOrphanPictures();
+        $pictureService->deleteOrphanPicturesByUser($user);
 
         return $this->render('admin/gallery/index.html.twig', [
             'galleries' => $galleries,

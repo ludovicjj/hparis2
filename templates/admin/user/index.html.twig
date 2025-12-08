@@ -1,0 +1,65 @@
+{% extends 'admin/admin_layout.html.twig' %}
+
+{% block title %}Utilisateurs - {{ parent() }}{% endblock %}
+
+{% block page_title %}Utilisateurs{% endblock %}
+
+{% block content %}
+    <div class="mb-6 flex justify-between items-center">
+        <p class="text-slate-400">{{ users|length }} utilisateur(s)</p>
+    </div>
+
+    {% if users is empty %}
+        <div class="bg-slate-900 rounded-xl p-12 border border-slate-700 text-center">
+            <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <p class="text-slate-400">Aucun utilisateur pour le moment</p>
+        </div>
+    {% else %}
+        <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden">
+            <table class="w-full">
+                <thead class="bg-slate-800 border-b border-slate-700">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300 border-r border-slate-700">Prenom</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300 border-r border-slate-700">Nom</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300 border-r border-slate-700">Email</th>
+                        <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">Role</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        <tr class="hover:bg-slate-800/50 transition{{ not loop.last ? ' border-b border-slate-700' : '' }}">
+                            <td class="px-6 py-4 border-r border-slate-700">
+                                <span class="text-white font-medium">{{ user.firstname ?? '-' }}</span>
+                            </td>
+                            <td class="px-6 py-4 border-r border-slate-700">
+                                <span class="text-white font-medium">{{ user.lastname ?? '-' }}</span>
+                            </td>
+                            <td class="px-6 py-4 border-r border-slate-700">
+                                <span class="text-slate-300">{{ user.email }}</span>
+                            </td>
+                            <td class="px-6 py-4">
+                                {% for role in user.roles %}
+                                    {% if role == 'ROLE_ADMIN' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-500/20 text-purple-400">
+                                            Admin
+                                        </span>
+                                    {% elseif role == 'ROLE_USER' %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-500/20 text-slate-400">
+                                            User
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-500/20 text-blue-400">
+                                            {{ role|replace({'ROLE_': ''}) }}
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+{% endblock %}

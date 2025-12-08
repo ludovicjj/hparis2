@@ -23,8 +23,13 @@ class Picture
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $originalName = null;
 
+    // path Lightbox (1200px)
     #[ORM\Column(length: 255)]
     private ?string $path = null;
+
+    // path thumbnail (400px)
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $thumbnailPath = null;
 
     #[ORM\Column(length: 10)]
     private ?string $type = null;
@@ -41,6 +46,10 @@ class Picture
     #[ORM\ManyToOne(inversedBy: 'pictures')]
     #[ORM\JoinColumn(nullable: true)]
     private ?Gallery $gallery = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?User $createdBy = null;
 
     #[ORM\PrePersist]
     public function onPrePersist(): void
@@ -147,5 +156,29 @@ class Picture
         $this->path = $path;
 
         return $this;
+    }
+
+    public function getThumbnailPath(): ?string
+    {
+        return $this->thumbnailPath;
+    }
+
+    public function setThumbnailPath(?string $thumbnailPath): static
+    {
+        $this->thumbnailPath = $thumbnailPath;
+
+        return $this;
+    }
+
+    public function setCreatedBy(?User $createdBy): static
+    {
+        $this->createdBy = $createdBy;
+
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
     }
 }

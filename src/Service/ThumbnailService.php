@@ -14,6 +14,7 @@ readonly class ThumbnailService
     public function __construct(
         private SluggerInterface $slugger,
         private Filesystem $filesystem,
+        private ImageOptimizerService $imageOptimizerService,
         private string $uploadDirectory,
     ) {
     }
@@ -56,7 +57,13 @@ readonly class ThumbnailService
         $thumbnailDir = $this->uploadDirectory . '/thumbnails';
         $this->filesystem->mkdir($thumbnailDir);
 
-        $file->move($thumbnailDir, $filename);
+        // Create and Upload Thumbnail file (600px)
+        $this->imageOptimizerService->optimizeThumbnail(
+            $file->getPathname(),
+            $thumbnailDir,
+            $filename,
+            ImageOptimizerService::MEDIUM_WITH
+        );
     }
 
     /**

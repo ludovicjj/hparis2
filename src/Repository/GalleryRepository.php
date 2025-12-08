@@ -42,4 +42,18 @@ class GalleryRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * @return Gallery[]
+     */
+    public function findVisibleWithThumbnails(): array
+    {
+        return $this->createQueryBuilder('g')
+            ->leftJoin('g.thumbnail', 't')
+            ->addSelect('t')
+            ->where('g.visibility = true')
+            ->orderBy('g.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }
