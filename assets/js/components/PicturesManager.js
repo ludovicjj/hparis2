@@ -30,7 +30,17 @@ export class PicturesManager {
         this.hiddenInput = document.getElementById('picture-ids');
         this.pictureIds = this.hiddenInput.value ? this.hiddenInput.value.split(',').map(Number) : [];
 
-        this.initDropzone()
+        // Submit button
+        this.submitBtn = document.getElementById('submit-btn');
+
+        // Upload state
+        this.isUploading = false;
+        this.abortController = null;
+
+        this.initDropzone();
+        this.initBeforeUnload();
+        this.initDeleteButtons();
+        this.initSortable();
     }
 
      initDropzone() {
@@ -60,11 +70,11 @@ export class PicturesManager {
             await this.handleUpload(e.target.files);
             e.target.value = '';
         });
-
-         // Initialize Sortable after first image is added
-         this.initSortable();
     }
 
+    /**
+     * Upload files sequentially (one by one) - legacy version
+     */
     async handleUpload(fileList) {
         const url = this.dropzone.dataset.uploadUrl;
 
@@ -84,6 +94,12 @@ export class PicturesManager {
         // init progress bar
         this.bar.style.width = '0%';
 
+        // Disable submit button during upload
+        this.setSubmitEnabled(false);
+
+        // Create abort controller for this upload batch
+        this.abortController = new AbortController();
+
         for (const file of files) {
             this.status.textContent = `Upload de ${file.name}...`;
             this.count.textContent = `${uploadedCount}/${totalFiles}`;
@@ -95,7 +111,8 @@ export class PicturesManager {
 
                 const response = await fetch(url, {
                     method: 'POST',
-                    body: formData
+                    body: formData,
+                    signal: this.abortController.signal
                 });
 
                 const data = await response.json();
@@ -120,22 +137,42 @@ export class PicturesManager {
 
         // Display finish message
         this.status.textContent = 'Upload terminé !';
+
+        // Re-enable submit button
+        this.setSubmitEnabled(true);
+
         // Hide progress bar container
         setTimeout(() => {
             this.progress.classList.add('hidden');
         }, 2000);
     }
 
+    setSubmitEnabled(enabled) {
+        if (this.submitBtn) {
+            this.submitBtn.disabled = !enabled;
+        }
+        this.isUploading = !enabled;
+    }
+
+    initBeforeUnload() {
+        window.addEventListener('beforeunload', (e) => {
+            if (this.isUploading) {
+                e.preventDefault();
+                this.abortController?.abort();
+            }
+        });
+    }
+
     addPictureToGrid(data) {
         // create picture
         const div = document.createElement('div');
-        div.className = 'relative group aspect-square cursor-grab active:cursor-grabbing';
+        div.className = 'relative group aspect-square cursor-grab active:cursor-grabbing picture-item';
         div.dataset.pictureId = data.id;
         div.innerHTML = `
             <img src="${data.path}" alt="${data.originalName}" class="w-full h-full object-cover rounded-lg">
             <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center">
                 <button type="button"
-                        class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition"
+                        class="btn-delete-picture bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition"
                         data-picture-id="${data.id}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
@@ -151,6 +188,48 @@ export class PicturesManager {
         });
 
         this.grid.appendChild(div);
+    }
+
+    updateHiddenInput() {
+        if (this.hiddenInput) {
+            this.hiddenInput.value = this.pictureIds.join(',');
+        }
+    }
+
+    // Initialize Sortable for drag & drop reordering
+    initSortable() {
+        if (!this.grid) {
+            console.error('Grid container is missing')
+            return;
+        }
+
+        new Sortable(this.grid, {
+            animation: 150,
+            ghostClass: 'opacity-50',
+            onEnd: () => {
+                console.log('Before sort', this.pictureIds)
+                // Rebuild pictureIds array based on DOM order
+                this.pictureIds = Array.from(this.grid.querySelectorAll('div[data-picture-id]'))
+                    .map(el => parseInt(el.dataset.pictureId));
+
+                console.log('After sort', this.pictureIds)
+                this.updateHiddenInput();
+            }
+        });
+    }
+
+    // Event delegation for delete buttons
+    initDeleteButtons() {
+        this.grid.addEventListener('click', async (e) => {
+            const btn = e.target.closest('.btn-delete-picture');
+            if (!btn) return;
+
+            e.preventDefault();
+            const pictureId = parseInt(btn.dataset.pictureId);
+            const pictureElement = btn.closest('.picture-item');
+
+            await this.deletePicture(pictureId, pictureElement);
+        });
     }
 
     async deletePicture(id, element) {
@@ -172,33 +251,5 @@ export class PicturesManager {
             console.error('Delete error:', error);
             alert('Erreur lors de la suppression');
         }
-    }
-
-    updateHiddenInput() {
-        if (this.hiddenInput) {
-            this.hiddenInput.value = this.pictureIds.join(',');
-        }
-    }
-
-    // Initialize Sortable for drag & drop reordering
-    initSortable() {
-        if (!this.grid) {
-            console.error('Grid container is missing')
-            return;
-        }
-
-        this.sortableInstance = new Sortable(this.grid, {
-            animation: 150,
-            ghostClass: 'opacity-50',
-            onEnd: () => {
-                console.log('Before sort', this.pictureIds)
-                // Rebuild pictureIds array based on DOM order
-                this.pictureIds = Array.from(this.grid.querySelectorAll('div[data-picture-id]'))
-                    .map(el => parseInt(el.dataset.pictureId));
-
-                console.log('After sort', this.pictureIds)
-                this.updateHiddenInput();
-            }
-        });
     }
 }

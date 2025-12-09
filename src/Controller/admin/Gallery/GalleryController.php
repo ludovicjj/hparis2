@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\GalleryType;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
+use App\Service\GalleryService;
 use App\Service\PictureService;
 use App\Service\ThumbnailService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -77,9 +78,11 @@ class GalleryController extends AbstractController
         PictureRepository $pictureRepository,
         ThumbnailService $thumbnailService,
         PictureService $pictureService,
+        GalleryService $galleryService,
     ): Response {
         $pictures = $pictureRepository->findByGalleryAndOrderPosition($gallery);
         $pictureIds = $pictureRepository->findIdsByGallery($gallery);
+        $frontGalleryUrl = $galleryService->generatePublicUrl($gallery);
 
         $form = $this->createForm(GalleryType::class, $gallery);
         $form->handleRequest($request);
@@ -101,6 +104,7 @@ class GalleryController extends AbstractController
             'form' => $form,
             'pictures' => $pictures,
             'pictureIds' => $pictureIds,
+            'front_gallery_url' => $frontGalleryUrl,
         ]);
     }
 
@@ -132,5 +136,17 @@ class GalleryController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_gallery_index');
+    }
+
+    #[Route('/{id}/token', name: 'token', methods: ['POST'])]
+    public function resetToken(Gallery $gallery, EntityManagerInterface $entityManager, GalleryService $galleryService): Response
+    {
+        $gallery->resetToken();
+        $entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'url' => $galleryService->generatePublicUrl($gallery),
+        ]);
     }
 }

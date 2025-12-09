@@ -5,6 +5,7 @@ namespace App\Controller\front;
 use App\Entity\Gallery;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
+use App\Service\GalleryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,10 +28,14 @@ class GalleryController extends AbstractController
     }
 
     #[Route('/{id}', name: 'show', methods: ['GET'])]
-    public function show(Gallery $gallery, PictureRepository $pictureRepository): Response
-    {
-        if (!$gallery->isVisibility()) {
-            throw $this->createNotFoundException('Galerie non disponible');
+    public function show(
+        Gallery $gallery,
+        Request $request,
+        PictureRepository $pictureRepository,
+        GalleryService $galleryService,
+    ): Response {
+        if (!$galleryService->canAccessGallery($gallery, $request->query->get('token'))) {
+            return $this->redirectToRoute('app_front_home');
         }
 
         $pictures = $pictureRepository->findByGalleryPaginated($gallery, 0, self::PICTURES_PER_PAGE);
@@ -41,6 +46,7 @@ class GalleryController extends AbstractController
             'pictures' => $pictures,
             'totalPictures' => $totalPictures,
             'hasMore' => $totalPictures > self::PICTURES_PER_PAGE,
+            'token' => $request->query->get('token'),
         ]);
     }
 
@@ -48,12 +54,8 @@ class GalleryController extends AbstractController
     public function pictures(
         Gallery $gallery,
         Request $request,
-        PictureRepository $pictureRepository
+        PictureRepository $pictureRepository,
     ): JsonResponse {
-        if (!$gallery->isVisibility()) {
-            return $this->json(['error' => 'Galerie non disponible'], Response::HTTP_NOT_FOUND);
-        }
-
         $offset = $request->query->getInt('offset', 0);
         $pictures = $pictureRepository->findByGalleryPaginated($gallery, $offset, self::PICTURES_PER_PAGE);
         $totalPictures = $pictureRepository->countByGallery($gallery);
