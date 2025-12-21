@@ -2,7 +2,6 @@
 
 namespace App\Controller\admin;
 
-use App\Entity\Gallery;
 use App\Entity\Picture;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
@@ -18,7 +17,7 @@ class DashboardController extends AbstractController
         PictureRepository $pictureRepository
     ): Response {
         $galleryCount = $galleryRepository->countAll();
-        $pictureCount = $pictureRepository->countByStatus(Picture::STATUS_ATTACHED);
+        $pictureCount = $pictureRepository->countByStatus(Picture::STATUS_READY);
 
         return $this->render('admin/dashboard/index.html.twig', [
             'galleryCount' => $galleryCount,

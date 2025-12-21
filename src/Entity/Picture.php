@@ -11,9 +11,6 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 class Picture
 {
-    public const string STATUS_PENDING = 'pending';
-    public const string STATUS_ATTACHED = 'attached';
-
     public const string STATUS_PROCESSING = 'processing';
     public const string STATUS_READY = 'ready';
 

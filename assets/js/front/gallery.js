@@ -33,7 +33,7 @@ function initInfiniteScroll() {
 
     function createPictureElement(picture) {
         const link = document.createElement('a');
-        link.href = picture.path; // Image lightbox (1200px)
+        link.href = picture.lightboxPath; // Image lightbox (1200px)
         link.className = 'glightbox aspect-square rounded-lg overflow-hidden bg-gray-200 animate-pulse block';
 
         const img = document.createElement('img');

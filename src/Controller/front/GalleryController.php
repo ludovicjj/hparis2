@@ -62,7 +62,7 @@ class GalleryController extends AbstractController
 
         $picturesData = array_map(fn($picture) => [
             'id' => $picture->getId(),
-            'path' => $picture->getPath(),
+            'lightboxPath' => $picture->getLightboxPath(),
             'thumbnailPath' => $picture->getThumbnailPath(),
             'originalName' => $picture->getOriginalName(),
         ], $pictures);

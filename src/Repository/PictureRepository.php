@@ -4,7 +4,6 @@ namespace App\Repository;
 
 use App\Entity\Gallery;
 use App\Entity\Picture;
-use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -60,18 +59,6 @@ class PictureRepository extends ServiceEntityRepository
             ->getSingleColumnResult();
     }
 
-    public function findUnattachedByUser(User $user): array
-    {
-        return $this->createQueryBuilder('p')
-            ->where('p.gallery IS NULL')
-            ->andWhere('p.status = :status')
-            ->andWhere('p.createdBy = :user')
-            ->setParameter('status', Picture::STATUS_PENDING)
-            ->setParameter('user', $user)
-            ->getQuery()
-            ->getResult();
-    }
-
     public function countByStatus(string $status): int
     {
         return (int) $this->createQueryBuilder('p')
@@ -89,7 +76,9 @@ class PictureRepository extends ServiceEntityRepository
     {
         return $this->createQueryBuilder('p')
             ->where('p.gallery = :gallery')
+            ->andWhere('p.status = :status')
             ->setParameter('gallery', $gallery)
+            ->setParameter('status', Picture::STATUS_READY)
             ->orderBy('p.position', 'ASC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
@@ -102,7 +91,9 @@ class PictureRepository extends ServiceEntityRepository
         return (int) $this->createQueryBuilder('p')
             ->select('COUNT(p.id)')
             ->where('p.gallery = :gallery')
+            ->andWhere('p.status = :status')
             ->setParameter('gallery', $gallery)
+            ->setParameter('status', Picture::STATUS_READY)
             ->getQuery()
             ->getSingleScalarResult();
     }

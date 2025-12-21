@@ -4,7 +4,6 @@ namespace App\Controller\admin\Gallery;
 
 use App\Entity\Gallery;
 use App\Entity\Picture;
-use App\Entity\User;
 use App\Form\GalleryType;
 use App\Message\ProcessPictureMessage;
 use App\Repository\GalleryRepository;
@@ -25,22 +24,15 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
 #[Route('/admin/gallery', name: 'app_admin_gallery_')]
 class GalleryController extends AbstractController
 {
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(
-        GalleryRepository $galleryRepository,
-        PictureService $pictureService,
-        #[CurrentUser] User $user
-    ): Response {
+    public function index(GalleryRepository $galleryRepository): Response
+    {
         $galleries = $galleryRepository->findAllWithThumbnails();
         $galleryCount = $galleryRepository->countAll();
-
-        // Clean Orphan picture created previously
-        $pictureService->deleteOrphanPicturesByUser($user);
 
         return $this->render('admin/gallery/index.html.twig', [
             'galleries' => $galleries,
@@ -53,7 +45,6 @@ class GalleryController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         ThumbnailService $thumbnailService,
-        PictureService $pictureService
     ): Response {
         $gallery = new Gallery();
         $form = $this->createForm(GalleryType::class, $gallery);
@@ -98,7 +89,8 @@ class GalleryController extends AbstractController
             // Handle Thumbnail from form data
             $thumbnailService->handle($form);
 
-            $pictureService->handle($form);
+            // Sort Gallery's pictures
+            $pictureService->sortPicture();
 
             $entityManager->flush();
             $this->addFlash('success', 'Galerie modifiée avec succès.');

@@ -38,7 +38,7 @@
             data-has-more="{{ hasMore ? 'true' : 'false' }}"
         >
             {% for picture in pictures %}
-                <a href="{{ picture.path }}" class="glightbox aspect-square rounded-lg overflow-hidden bg-gray-100 block">
+                <a href="{{ picture.lightboxPath }}" class="glightbox aspect-square rounded-lg overflow-hidden bg-gray-100 block">
                     <img
                         src="{{ picture.thumbnailPath }}"
                         alt="{{ picture.originalName }}"
