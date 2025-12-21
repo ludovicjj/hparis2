@@ -1,6 +1,15 @@
 import Sortable from 'sortablejs';
+import imageCompression from 'browser-image-compression';
 
 export class PicturesManager {
+
+    // Compression options
+    static COMPRESSION_OPTIONS = {
+        maxSizeMB: 1,              // Taille max après compression (1MB)
+        maxWidthOrHeight: 1200,    // Dimension max (égale au lightbox PHP)
+        useWebWorker: true,        // Utiliser un Web Worker (non-bloquant)
+        fileType: 'image/jpeg',    // Convertir en JPEG
+    };
 
     /**
      *
@@ -73,7 +82,28 @@ export class PicturesManager {
     }
 
     /**
-     * Upload files sequentially (one by one) - legacy version
+     * Compress an image file before upload
+     * @param {File} file - Original file
+     * @returns {Promise<File>} - Compressed file
+     */
+    async compressImage(file) {
+        // Skip compression for non-image files or small files (< 500KB)
+        if (!file.type.startsWith('image/') || file.size < 500 * 1024) {
+            return file;
+        }
+
+        try {
+            const compressedFile = await imageCompression(file, PicturesManager.COMPRESSION_OPTIONS);
+            console.log(`Compression: ${(file.size / 1024 / 1024).toFixed(2)}MB → ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`);
+            return compressedFile;
+        } catch (error) {
+            console.warn('Compression failed, using original file:', error);
+            return file;
+        }
+    }
+
+    /**
+     * Upload files sequentially with client-side compression
      */
     async handleUpload(fileList) {
         const url = this.dropzone.dataset.uploadUrl;
@@ -100,15 +130,35 @@ export class PicturesManager {
         // Create abort controller for this upload batch
         this.abortController = new AbortController();
 
+        // Timing logs
+        const batchStartTime = performance.now();
+        console.log(`\n📦 Début du batch: ${totalFiles} images`);
+        console.log('─'.repeat(50));
+
+        let totalCompressionTime = 0;
+        let totalUploadTime = 0;
+
         for (const file of files) {
-            this.status.textContent = `Upload de ${file.name}...`;
+            // Step 1: Compress the image
+            this.status.textContent = `Compression de ${file.name}...`;
             this.count.textContent = `${uploadedCount}/${totalFiles}`;
 
-            // let go send file
+            const compressionStart = performance.now();
+            const compressedFile = await this.compressImage(file);
+            const compressionTime = performance.now() - compressionStart;
+            totalCompressionTime += compressionTime;
+
+            // Step 2: Create blob URL for local preview
+            const blobUrl = URL.createObjectURL(compressedFile);
+
+            // Step 3: Upload the compressed image
+            this.status.textContent = `Upload de ${file.name}...`;
+
             try {
                 const formData = new FormData();
-                formData.append('file', file);
+                formData.append('file', compressedFile, file.name); // Keep original filename
 
+                const uploadStart = performance.now();
                 const response = await fetch(url, {
                     method: 'POST',
                     body: formData,
@@ -116,16 +166,24 @@ export class PicturesManager {
                 });
 
                 const data = await response.json();
+                const uploadTime = performance.now() - uploadStart;
+                totalUploadTime += uploadTime;
+
+                // Log timing for this file
+                const fileSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
+                console.log(`[${uploadedCount + 1}/${totalFiles}] ${file.name} (${fileSizeMB}MB) → Compression: ${compressionTime.toFixed(0)}ms | Upload: ${uploadTime.toFixed(0)}ms`);
 
                 if (data.success) {
-                    this.addPictureToGrid(data);
+                    this.addPictureToGrid(data.id, blobUrl, data.originalName);
                     this.pictureIds.push(data.id);
                     this.updateHiddenInput();
                 } else {
                     console.error('Upload failed:', data.error);
+                    URL.revokeObjectURL(blobUrl); // Clean up on error
                 }
             } catch (error) {
                 console.error('Upload error:', error);
+                URL.revokeObjectURL(blobUrl); // Clean up on error
             }
 
             // Update UI
@@ -134,6 +192,17 @@ export class PicturesManager {
             this.bar.style.width = `${progressPercent}%`;
             this.count.textContent = `${uploadedCount}/${totalFiles}`;
         }
+
+        // Final summary
+        const totalTime = performance.now() - batchStartTime;
+        console.log('─'.repeat(50));
+        console.log(`📊 RÉSUMÉ DU BATCH:`);
+        console.log(`   Total: ${(totalTime / 1000).toFixed(2)}s`);
+        console.log(`   Compression (total): ${(totalCompressionTime / 1000).toFixed(2)}s`);
+        console.log(`   Upload+PHP (total): ${(totalUploadTime / 1000).toFixed(2)}s`);
+        console.log(`   Moyenne par image: ${(totalTime / totalFiles / 1000).toFixed(2)}s`);
+        console.log(`   Moyenne Upload+PHP: ${(totalUploadTime / totalFiles).toFixed(0)}ms`);
+        console.log('─'.repeat(50));
 
         // Display finish message
         this.status.textContent = 'Upload terminé !';
@@ -163,17 +232,16 @@ export class PicturesManager {
         });
     }
 
-    addPictureToGrid(data) {
-        // create picture
+    addPictureToGrid(id, blobUrl, originalName) {
         const div = document.createElement('div');
         div.className = 'relative group aspect-square cursor-grab active:cursor-grabbing picture-item';
-        div.dataset.pictureId = data.id;
+        div.dataset.pictureId = id;
         div.innerHTML = `
-            <img src="${data.path}" alt="${data.originalName}" class="w-full h-full object-cover rounded-lg">
+            <img src="${blobUrl}" alt="${originalName}" class="w-full h-full object-cover rounded-lg">
             <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center">
                 <button type="button"
                         class="btn-delete-picture bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition"
-                        data-picture-id="${data.id}">
+                        data-picture-id="${id}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -184,7 +252,7 @@ export class PicturesManager {
         // Add delete event
         div.querySelector('button').addEventListener('click', async (e) => {
             e.preventDefault();
-            await this.deletePicture(data.id, div);
+            await this.deletePicture(id, div);
         });
 
         this.grid.appendChild(div);

@@ -20,4 +20,8 @@ yarn-error.log
 /public/uploads/*
 !/public/uploads/.gitkeep
 ###< uploads ###
+
+###> other ###
 nul
+CLAUDE.md
+###< other ###

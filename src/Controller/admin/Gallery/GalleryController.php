@@ -3,8 +3,10 @@
 namespace App\Controller\admin\Gallery;
 
 use App\Entity\Gallery;
+use App\Entity\Picture;
 use App\Entity\User;
 use App\Form\GalleryType;
+use App\Message\ProcessPictureMessage;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
 use App\Service\GalleryService;
@@ -12,6 +14,14 @@ use App\Service\PictureService;
 use App\Service\ThumbnailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Bundle\SecurityBundle\Security;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -53,15 +63,12 @@ class GalleryController extends AbstractController
             // Handle Thumbnail from form data
             $thumbnailService->handle($form);
 
-            // Fetch and bind to Gallery all Pending Pictures into hidden field
-            $pictureService->handle($form);
-
             $entityManager->persist($gallery);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Galerie créée avec succès.');
+            $this->addFlash('success', 'Votre galerie est prête !');
 
-            return $this->redirectToRoute('app_admin_gallery_index', ['id' => $gallery->getId()]);
+            return $this->redirectToRoute('app_admin_gallery_update', ['id' => $gallery->getId()]);
         }
 
         return $this->render('admin/gallery/create.html.twig', [
@@ -108,7 +115,7 @@ class GalleryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'delete', methods: ['POST'])]
+    #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
     public function delete(
         Request $request,
         Gallery $gallery,
@@ -147,6 +154,69 @@ class GalleryController extends AbstractController
         return $this->json([
             'success' => true,
             'url' => $galleryService->generatePublicUrl($gallery),
+        ]);
+    }
+
+    #[Route('/{id}/pictures', name: 'add_picture', methods: ['POST'])]
+    public function addPicture(
+        Request $request,
+        Gallery $gallery,
+        EntityManagerInterface $entityManager,
+        MessageBusInterface $messageBus,
+        SluggerInterface $slugger,
+        Filesystem $filesystem,
+        Security $security,
+        #[Autowire('%upload_directory%')] string $uploadDirectory,
+    ): JsonResponse {
+        /** @var UploadedFile|null $file */
+        $file = $request->files->get('file');
+
+        // 1. Validation
+        if (!$file || !$file->isValid()) {
+            return $this->json(['success' => false, 'error' => 'Fichier invalide'], 400);
+        }
+
+        $allowedMimeTypes = ['image/jpeg', 'image/png'];
+        if (!in_array($file->getMimeType(), $allowedMimeTypes)) {
+            return $this->json(['success' => false, 'error' => 'Type de fichier non autorisé'], 400);
+        }
+
+        // 2. Générer filename unique
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = strtolower($file->guessExtension() ?? $file->getClientOriginalExtension());
+        $safeFilename = $slugger->slug($originalName)->slice(0, 100);
+        $filename = $safeFilename . '-' . uniqid() . '.' . $extension;
+
+        // 3. Sauver dans /temp/
+        $tempDir = $uploadDirectory . '/temp';
+        $filesystem->mkdir($tempDir);
+        $file->move($tempDir, $filename);
+
+        // 4. Créer Picture liée à la Gallery
+        $picture = new Picture();
+        $picture->setFilename($filename);
+        $picture->setOriginalName($originalName);
+        $picture->setType($extension);
+        $picture->setTempPath('/temp/' . $filename);
+        $picture->setGallery($gallery);
+        $picture->setCreatedBy($security->getUser());
+
+        $entityManager->persist($picture);
+        $entityManager->flush();
+
+        // 5. Dispatcher le message pour traitement async
+        try {
+            $messageBus->dispatch(new ProcessPictureMessage($picture->getId()));
+        } catch (ExceptionInterface) {
+            return $this->json(['success' => false, 'error' => "Echec de prise en charge de l'image"], 400);
+        }
+
+        // 6. Retourner la réponse
+        return $this->json([
+            'success' => true,
+            'id' => $picture->getId(),
+            'status' => Picture::STATUS_PROCESSING,
+            'originalName' => $picture->getOriginalName(),
         ]);
     }
 }
