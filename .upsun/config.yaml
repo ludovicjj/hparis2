@@ -1,0 +1,78 @@
+routes:
+    "https://{all}/": { type: upstream, upstream: "app:http" }
+    "http://{all}/": { type: redirect, to: "https://{all}/" }
+
+services:
+    database:
+        type: mysql:8.0
+
+applications:
+    app:
+        source:
+            root: "/"
+
+        type: php:8.4
+
+        runtime:
+            extensions:
+
+        variables:
+            php:
+                opcache.preload: config/preload.php
+
+        build:
+            flavor: none
+
+        web:
+            locations:
+                "/":
+                    root: "public"
+                    expires: 1h
+                    passthru: "/index.php"
+
+        mounts:
+            "/var/cache": { source: instance, source_path: var/cache }
+            "/var/share": { source: storage, source_path: var/share }
+            
+
+        relationships:
+            database: "database:mysql"
+
+        hooks:
+            build: |
+                set -x -e
+
+                curl -fs https://get.symfony.com/cloud/configurator | bash
+                # php-ext-install apcu X.Y.Z
+                # php-ext-install blackfire X.Y.Z
+                # php-ext-install ctype X.Y.Z
+                # php-ext-install gd X.Y.Z
+                # php-ext-install iconv X.Y.Z
+                # php-ext-install mbstring X.Y.Z
+                # php-ext-install openssl X.Y.Z
+                # php-ext-install sodium X.Y.Z
+                # php-ext-install xsl X.Y.Z
+                
+                NODE_VERSION=22 symfony-build
+
+            deploy: |
+                set -x -e
+
+                symfony-deploy
+
+        crons:
+            security-check:
+                # Check that no security issues have been found for PHP packages deployed in production
+                spec: '50 23 * * *'
+                commands:
+                    start: if [ "$PLATFORM_ENVIRONMENT_TYPE" = "production" ]; then croncape COMPOSER_ROOT_VERSION=1.0.0 COMPOSER_AUDIT_ABANDONED=ignore composer audit --no-cache; fi
+            clean-expired-sessions:
+                spec: '17,47 * * * *'
+                commands:
+                    start: croncape php-session-clean
+
+        workers:
+            messenger:
+                commands:
+                    # Consume "async" messages (as configured in the routing section of config/packages/messenger.yaml)
+                    start: symfony console --time-limit=3600 --memory-limit=64M messenger:consume async
