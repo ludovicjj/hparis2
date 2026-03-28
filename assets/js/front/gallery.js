@@ -34,11 +34,14 @@ function initInfiniteScroll() {
     function createPictureElement(picture) {
         const link = document.createElement('a');
         link.href = picture.lightboxPath; // Image lightbox (1200px)
-        link.className = 'glightbox aspect-square rounded-lg overflow-hidden bg-gray-200 animate-pulse block';
+        link.className = 'glightbox aspect-square overflow-hidden bg-gray-200 animate-pulse block relative group';
 
         const img = document.createElement('img');
         img.alt = picture.originalName || '';
-        img.className = 'w-full h-full object-cover hover:scale-105 transition-transform duration-300 cursor-pointer opacity-0 transition-opacity';
+        img.className = 'w-full h-full object-cover cursor-pointer opacity-0 transition-opacity';
+
+        const overlay = document.createElement('div');
+        overlay.className = 'absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200';
         img.loading = 'lazy';
         img.decoding = 'async';
 
@@ -52,6 +55,7 @@ function initInfiniteScroll() {
 
         img.src = picture.thumbnailPath; // Thumbnail (400px)
         link.appendChild(img);
+        link.appendChild(overlay);
         return link;
     }
 
