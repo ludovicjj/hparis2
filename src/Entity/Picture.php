@@ -13,6 +13,7 @@ class Picture
 {
     public const string STATUS_PROCESSING = 'processing';
     public const string STATUS_READY = 'ready';
+    public const string STATUS_FAILED = 'failed';
 
     #[ORM\Id]
     #[ORM\GeneratedValue]

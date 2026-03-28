@@ -86,6 +86,16 @@ class PictureRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function findMaxPositionByGallery(Gallery $gallery): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('MAX(p.position)')
+            ->where('p.gallery = :gallery')
+            ->setParameter('gallery', $gallery)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
     public function countByGallery(Gallery $gallery): int
     {
         return (int) $this->createQueryBuilder('p')

@@ -2,10 +2,11 @@
 
 namespace App\Service;
 
+use App\Entity\Gallery;
 use App\Entity\Picture;
 use App\Repository\PictureRepository;
-use DateTimeImmutable;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -23,7 +24,6 @@ readonly class PictureService
         private SluggerInterface $slugger,
         private Filesystem $filesystem,
         private EntityManagerInterface $entityManager,
-        private ImageOptimizerService $imageOptimizerService,
         private Security $security,
         private string $uploadDirectory,
     ) {
@@ -58,32 +58,45 @@ readonly class PictureService
         }
     }
 
-    /**
-     * Validate an uploaded file
-     */
-    public function validate(?UploadedFile $file): ?string
+    public function createFromUpload(?UploadedFile $file, Gallery $gallery): Picture
     {
-        if (!$file) {
-            return 'Aucun fichier reçu';
+        // 1 - Validate
+        $error = $this->validate($file);
+        if ($error) {
+            throw new InvalidArgumentException($error);
         }
 
-        if (!$file->isValid()) {
-            return $file->getErrorMessage();
-        }
+        // 2 - Generate unique filename
+        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        $extension = strtolower($file->guessExtension() ?? $file->getClientOriginalExtension());
+        $filename = $this->generateUniqueFilename($originalName, $extension);
 
-        if (!in_array($file->getMimeType(), self::ALLOWED_MIME_TYPES)) {
-            return 'Type de fichier non autorisé';
-        }
+        // 3 - Save to /temp/
+        $tempDir = $this->uploadDirectory . '/temp';
+        $this->filesystem->mkdir($tempDir);
+        $file->move($tempDir, $filename);
 
-        if ($file->getSize() > self::MAX_FILE_SIZE) {
-            return 'Fichier trop volumineux (max 20 Mo)';
-        }
+        // 4 - fetch next position
+        $position = $this->pictureRepository->findMaxPositionByGallery($gallery) + 1;
 
-        return null;
+        // 5 - Create Picture entity
+        $picture = new Picture();
+        $picture->setFilename($filename);
+        $picture->setOriginalName($originalName);
+        $picture->setType($extension);
+        $picture->setTempPath('/temp/' . $filename);
+        $picture->setGallery($gallery);
+        $picture->setCreatedBy($this->security->getUser());
+        $picture->setPosition($position);
+
+        $this->entityManager->persist($picture);
+        $this->entityManager->flush();
+
+        return $picture;
     }
 
     /**
-     * Delete a picture entity and its file
+     * Delete a picture entity and all associated files
      */
     public function delete(Picture $picture): void
     {
@@ -130,21 +143,9 @@ readonly class PictureService
 
     private function generateUniqueFilename(string $originalName, string $extension): string
     {
-        $safeFilename = $this->slugger->slug($originalName);
+        $safeFilename = $this->slugger->slug($originalName)->slice(0, 100);
 
         return $safeFilename . '-' . uniqid() . '.' . $extension;
-    }
-
-    private function getDatePath(): string
-    {
-        return new DateTimeImmutable()->format('Y/m/d');
-    }
-
-    private function moveFile(UploadedFile $file, string $datePath, string $filename): void
-    {
-        $picturesDir = $this->uploadDirectory . '/pictures/' . $datePath;
-        $this->filesystem->mkdir($picturesDir);
-        $file->move($picturesDir, $filename);
     }
 
     private function getAbsolutePath(string $relativePath): string
@@ -152,5 +153,29 @@ readonly class PictureService
         $relativePath = ltrim($relativePath, '/');
 
         return dirname($this->uploadDirectory) . '/' . $relativePath;
+    }
+
+    /**
+     * Validate an uploaded file
+     */
+    private function validate(?UploadedFile $file): ?string
+    {
+        if (!$file) {
+            return 'Aucun fichier reçu';
+        }
+
+        if (!$file->isValid()) {
+            return $file->getErrorMessage();
+        }
+
+        if (!in_array($file->getMimeType(), self::ALLOWED_MIME_TYPES)) {
+            return 'Type de fichier non autorisé';
+        }
+
+        if ($file->getSize() > self::MAX_FILE_SIZE) {
+            return 'Fichier trop volumineux (max 20 Mo)';
+        }
+
+        return null;
     }
 }

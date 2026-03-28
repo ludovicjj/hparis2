@@ -130,12 +130,6 @@ export class PicturesManager {
         // Create abort controller for this upload batch
         this.abortController = new AbortController();
 
-        // Timing logs
-        const batchStartTime = performance.now();
-        console.log(`\n📦 Début du batch: ${totalFiles} images`);
-        console.log('─'.repeat(50));
-
-        let totalCompressionTime = 0;
         let totalUploadTime = 0;
 
         for (const file of files) {
@@ -143,10 +137,7 @@ export class PicturesManager {
             this.status.textContent = `Compression de ${file.name}...`;
             this.count.textContent = `${uploadedCount}/${totalFiles}`;
 
-            const compressionStart = performance.now();
             const compressedFile = await this.compressImage(file);
-            const compressionTime = performance.now() - compressionStart;
-            totalCompressionTime += compressionTime;
 
             // Step 2: Create blob URL for local preview
             const blobUrl = URL.createObjectURL(compressedFile);
@@ -169,10 +160,6 @@ export class PicturesManager {
                 const uploadTime = performance.now() - uploadStart;
                 totalUploadTime += uploadTime;
 
-                // Log timing for this file
-                const fileSizeMB = (compressedFile.size / 1024 / 1024).toFixed(2);
-                console.log(`[${uploadedCount + 1}/${totalFiles}] ${file.name} (${fileSizeMB}MB) → Compression: ${compressionTime.toFixed(0)}ms | Upload: ${uploadTime.toFixed(0)}ms`);
-
                 if (data.success) {
                     this.addPictureToGrid(data.id, blobUrl, data.originalName);
                     this.pictureIds.push(data.id);
@@ -192,17 +179,6 @@ export class PicturesManager {
             this.bar.style.width = `${progressPercent}%`;
             this.count.textContent = `${uploadedCount}/${totalFiles}`;
         }
-
-        // Final summary
-        const totalTime = performance.now() - batchStartTime;
-        console.log('─'.repeat(50));
-        console.log(`📊 RÉSUMÉ DU BATCH:`);
-        console.log(`   Total: ${(totalTime / 1000).toFixed(2)}s`);
-        console.log(`   Compression (total): ${(totalCompressionTime / 1000).toFixed(2)}s`);
-        console.log(`   Upload+PHP (total): ${(totalUploadTime / 1000).toFixed(2)}s`);
-        console.log(`   Moyenne par image: ${(totalTime / totalFiles / 1000).toFixed(2)}s`);
-        console.log(`   Moyenne Upload+PHP: ${(totalUploadTime / totalFiles).toFixed(0)}ms`);
-        console.log('─'.repeat(50));
 
         // Display finish message
         this.status.textContent = 'Upload terminé !';
@@ -248,12 +224,6 @@ export class PicturesManager {
                 </button>
             </div>
         `;
-
-        // Add delete event
-        div.querySelector('button').addEventListener('click', async (e) => {
-            e.preventDefault();
-            await this.deletePicture(id, div);
-        });
 
         this.grid.appendChild(div);
     }

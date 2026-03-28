@@ -12,5 +12,7 @@ new ResetToken('#reset-token-btn', '#gallery-url', '#reset-token-text');
 // Init Thumbnail preview
 initThumbnailPreview('#gallery_thumbnailFile', '#thumbnail-dropzone');
 
-// Init Pictures upload (for create page)
-new PicturesManager('#pictures-dropzone', '#pictures-input')
+// Init Pictures upload (only on update page)
+if (document.querySelector('#pictures-dropzone')) {
+    new PicturesManager('#pictures-dropzone', '#pictures-input');
+}
