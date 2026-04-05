@@ -5,7 +5,6 @@ routes:
 services:
     database:
         type: oracle-mysql:8.0
-        disk: 256
 
 applications:
     app:
