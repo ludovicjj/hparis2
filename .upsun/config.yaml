@@ -50,7 +50,6 @@ applications:
                 # php-ext-install apcu X.Y.Z
                 # php-ext-install blackfire X.Y.Z
                 # php-ext-install ctype X.Y.Z
-                php-ext-install gd 8.4
                 # php-ext-install iconv X.Y.Z
                 # php-ext-install mbstring X.Y.Z
                 # php-ext-install openssl X.Y.Z
