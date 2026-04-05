@@ -4,7 +4,8 @@ routes:
 
 services:
     database:
-        type: mysql:8.0
+        type: oracle-mysql:8.0
+        disk: 256
 
 applications:
     app:
@@ -38,7 +39,9 @@ applications:
             
 
         relationships:
-            database: "database:mysql"
+            database:
+                service: database
+                endpoint: mysql
 
         hooks:
             build: |
