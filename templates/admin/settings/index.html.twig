@@ -36,7 +36,7 @@
         <div id="social-links-sortable" data-reorder-url="{{ path('app_admin_settings_social_link_reorder') }}" class="space-y-3">
             {% for link in socialLinks %}
                 <div data-id="{{ link.id }}" class="bg-slate-900 rounded-xl border border-slate-700 p-4 hover:bg-slate-800/50 transition">
-                    {# Row 1: Handle + Platform + (desktop: URL, status, actions) #}
+                    {# Container desktop #}
                     <div class="flex items-center gap-3">
                         {# Drag handle #}
                         <span class="drag-handle cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 shrink-0">
@@ -51,12 +51,12 @@
                             <span class="font-medium capitalize">{{ link.platform }}</span>
                         </div>
 
-                        {# URL - desktop only #}
+                        {# URL #}
                         <a href="{{ link.url }}" target="_blank" class="hidden sm:block text-purple-400 hover:text-purple-300 transition text-sm truncate min-w-0 flex-1">
                             {{ link.url }}
                         </a>
 
-                        {# Status toggle - desktop only #}
+                        {# Status #}
                         <form method="post" action="{{ path('app_admin_settings_social_link_toggle', {id: link.id}) }}" class="hidden sm:block shrink-0">
                             <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ link.id) }}">
                             <button type="submit" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition
@@ -65,7 +65,7 @@
                             </button>
                         </form>
 
-                        {# Actions - desktop only #}
+                        {# Actions #}
                         <div class="hidden sm:flex items-center space-x-2 shrink-0">
                             <a href="{{ path('app_admin_settings_social_link_edit', {id: link.id}) }}"
                                class="p-2 border border-slate-600 rounded-md text-slate-400 hover:text-white hover:border-slate-400 transition" title="Modifier">
@@ -85,7 +85,7 @@
                         </div>
                     </div>
 
-                    {# Row 2 (mobile only): URL + Status + Actions #}
+                    {# Container : mobile #}
                     <div class="sm:hidden mt-3 space-y-3">
                         <a href="{{ link.url }}" target="_blank" class="text-purple-400 hover:text-purple-300 transition text-sm truncate block">
                             {{ link.url }}
