@@ -34,8 +34,7 @@ applications:
         mounts:
             "/var/cache": { source: instance, source_path: var/cache }
             "/var/share": { source: storage, source_path: var/share }
-            "/public/uploads": { source: storage, source_path: uploads }
-            
+
 
         relationships:
             database:
