@@ -6,10 +6,11 @@ use App\Entity\Picture;
 use App\Message\ProcessPictureMessage;
 use App\Repository\PictureRepository;
 use App\Service\ImageOptimizerService;
-use DateTimeImmutable;
+use App\Service\PictureService;
+use App\Service\S3Service;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Filesystem\Filesystem;
+use RuntimeException;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Throwable;
 
@@ -20,53 +21,68 @@ readonly class ProcessPictureHandler
         private PictureRepository      $pictureRepository,
         private ImageOptimizerService  $imageOptimizerService,
         private EntityManagerInterface $entityManager,
-        private Filesystem             $filesystem,
-        private string                 $uploadDirectory,
+        private S3Service              $s3Service,
         private LoggerInterface        $logger,
     ) {}
 
     public function __invoke(ProcessPictureMessage $message): void
     {
-        try {
-            // 1. Fetch Picture
-            $picture = $this->pictureRepository->find($message->getPictureId());
+        $pictureId = $message->getPictureId();
 
+        try {
+            $picture = $this->pictureRepository->find($pictureId);
+
+            // Picture was deleted between dispatch and processing — no-op.
             if (!$picture) {
                 return;
             }
 
-            // 2. Fetch tempPath and prepare target dir
-            $tempPath = $this->uploadDirectory . '/' . ltrim($picture->getTempPath(), '/');
-            $datePath = new DateTimeImmutable()->format('Y/m/d');
-            $picturesDir = $this->uploadDirectory . '/pictures/' . $datePath;
-            $this->filesystem->mkdir($picturesDir);
+            // 1 - Pull the original binary back from S3
+            $tempKey = PictureService::buildTempKey($picture);
+            $sourceContent = $this->s3Service->getFileContent($tempKey);
 
-            // 3. Resize picture (1200px lightbox + 400px thumbnail)
-            $optimized = $this->imageOptimizerService->optimizePicture(
-                $tempPath,
-                $picturesDir,
-                $picture->getFilename()
-            );
+            if ($sourceContent === false) {
+                throw new RuntimeException(sprintf(
+                    'Temp object "%s" not found on S3 for picture #%d.',
+                    $tempKey,
+                    $pictureId
+                ));
+            }
 
-            // 4. Update Picture with Thumbnail and Lightbox format
-            $picture->setLightboxPath('/uploads/pictures/' . $datePath . '/' . $optimized['lightbox']);
-            $picture->setThumbnailPath('/uploads/pictures/' . $datePath . '/' . $optimized['thumbnail']);
-            $picture->setTempPath(null);
+            // 2 - Resize in memory: 1200px lightbox + 400px thumbnail
+            $optimized = $this->imageOptimizerService->optimizePicture($sourceContent);
+
+            // 3 - Compute the final S3 keys for this picture
+            $baseFilename = $picture->getFilename();
+            $baseName = pathinfo($baseFilename, PATHINFO_FILENAME);
+            $galleryId = $picture->getGallery()->getId();
+
+            $lightboxKey = sprintf('galleries/%d/%s.jpg', $galleryId, $baseName);
+            $thumbnailKey = sprintf('galleries/%d/%s-thumb.jpg', $galleryId, $baseName);
+
+            // 4 - Upload both variants as public-readable JPEGs
+            if (!$this->s3Service->uploadPublicFile($lightboxKey, $optimized['lightbox'], 'image/jpeg')) {
+                throw new RuntimeException(sprintf('Failed to upload lightbox to S3 (%s).', $lightboxKey));
+            }
+            if (!$this->s3Service->uploadPublicFile($thumbnailKey, $optimized['thumbnail'], 'image/jpeg')) {
+                throw new RuntimeException(sprintf('Failed to upload thumbnail to S3 (%s).', $thumbnailKey));
+            }
+
+            // 5 - Persist the new state
+            $picture->setLightboxPath($lightboxKey);
+            $picture->setThumbnailPath($thumbnailKey);
             $picture->setStatus(Picture::STATUS_READY);
-
-            // 5. Remove Temp file
-            $this->filesystem->remove($tempPath);
-
-            // 6. BDD
             $this->entityManager->flush();
+
+            // 6 - Cleanup the temp object
+            $this->s3Service->deleteFile($tempKey);
         } catch (Throwable $exception) {
             $this->logger->error('Failed to process picture #{id}: {message}', [
-                'id' => $message->getPictureId(),
+                'id' => $pictureId,
                 'message' => $exception->getMessage(),
             ]);
 
-            $picture = $this->pictureRepository->find($message->getPictureId());
-
+            $picture = $this->pictureRepository->find($pictureId);
             if ($picture) {
                 $picture->setStatus(Picture::STATUS_FAILED);
                 $this->entityManager->flush();

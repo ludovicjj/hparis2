@@ -6,6 +6,7 @@ use App\Entity\Gallery;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
 use App\Service\GalleryService;
+use App\Service\S3Service;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -55,15 +56,17 @@ class GalleryController extends AbstractController
         Gallery $gallery,
         Request $request,
         PictureRepository $pictureRepository,
+        S3Service $s3Service,
     ): JsonResponse {
         $offset = $request->query->getInt('offset', 0);
         $pictures = $pictureRepository->findByGalleryPaginated($gallery, $offset, self::PICTURES_PER_PAGE);
         $totalPictures = $pictureRepository->countByGallery($gallery);
 
+        // Build absolute S3 URLs server-side so the JS can use them as-is in <img src> / <a href>.
         $picturesData = array_map(fn($picture) => [
             'id' => $picture->getId(),
-            'lightboxPath' => $picture->getLightboxPath(),
-            'thumbnailPath' => $picture->getThumbnailPath(),
+            'lightboxPath' => $s3Service->getPublicUrl($picture->getLightboxPath()),
+            'thumbnailPath' => $s3Service->getPublicUrl($picture->getThumbnailPath()),
             'originalName' => $picture->getOriginalName(),
         ], $pictures);
 
