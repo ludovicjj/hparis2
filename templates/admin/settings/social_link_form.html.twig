@@ -1,0 +1,47 @@
+{% extends 'admin/admin_layout.html.twig' %}
+
+{% block title %}{{ isEdit ? 'Modifier' : 'Ajouter' }} un réseau social - {{ parent() }}{% endblock %}
+
+{% block page_title %}{{ isEdit ? 'Modifier' : 'Ajouter' }} un réseau social{% endblock %}
+
+{% block content %}
+    <div class="bg-slate-900 rounded-xl p-6 border border-slate-700">
+        {{ form_start(form) }}
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">{{ form_label(form.platform) }}</label>
+                    {{ form_widget(form.platform, {
+                        attr: {class: 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}
+                    }) }}
+                    {{ form_errors(form.platform) }}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">{{ form_label(form.url) }}</label>
+                    {{ form_widget(form.url, {
+                        attr: {class: 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}
+                    }) }}
+                    {{ form_errors(form.url) }}
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <span class="text-sm font-medium text-slate-300">{{ form_label(form.active, 'Actif', {'label_attr': {'class': 'text-sm font-medium text-slate-300'}}) }}</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        {{ form_widget(form.active, {'attr': {'class': 'sr-only peer'}}) }}
+                        <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="mt-8 flex items-center justify-between">
+                <a href="{{ path('app_admin_settings') }}" class="text-slate-400 hover:text-white transition text-sm">
+                    &larr; Retour aux paramètres
+                </a>
+                <button type="submit"
+                        class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-6 rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all">
+                    {{ isEdit ? 'Modifier' : 'Ajouter' }}
+                </button>
+            </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

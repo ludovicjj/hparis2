@@ -1,0 +1,124 @@
+{% extends 'admin/admin_layout.html.twig' %}
+
+{% block title %}Paramètres - {{ parent() }}{% endblock %}
+
+{% block page_title %}Paramètres{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_settings') }}
+{% endblock %}
+
+{% block content %}
+    <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+        <div>
+            <h2 class="text-lg font-semibold text-white">Réseaux sociaux</h2>
+            <p class="text-slate-400 text-sm">Gérez les liens vers vos réseaux sociaux affichés sur le site</p>
+        </div>
+        <a href="{{ path('app_admin_settings_social_link_create') }}"
+           class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all text-sm">
+            + Ajouter un réseau
+        </a>
+    </div>
+
+    {% if socialLinks is empty %}
+        <div class="bg-slate-900 rounded-xl p-12 border border-slate-700 text-center">
+            <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+            <p class="text-slate-400 mb-4">Aucun réseau social configuré</p>
+            <a href="{{ path('app_admin_settings_social_link_create') }}"
+               class="text-purple-400 hover:text-purple-300 transition text-sm">
+                Ajouter votre premier réseau social &rarr;
+            </a>
+        </div>
+    {% else %}
+        <div id="social-links-sortable" data-reorder-url="{{ path('app_admin_settings_social_link_reorder') }}" class="space-y-3">
+            {% for link in socialLinks %}
+                <div data-id="{{ link.id }}" class="bg-slate-900 rounded-xl border border-slate-700 p-4 hover:bg-slate-800/50 transition">
+                    {# Row 1: Handle + Platform + (desktop: URL, status, actions) #}
+                    <div class="flex items-center gap-3">
+                        {# Drag handle #}
+                        <span class="drag-handle cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                            </svg>
+                        </span>
+
+                        {# Icon + Platform #}
+                        <div class="flex items-center space-x-3 text-white shrink-0">
+                            {{ include('partials/icons/' ~ link.platform ~ '.html.twig', {class: 'w-5 h-5'}, ignore_missing=true) }}
+                            <span class="font-medium capitalize">{{ link.platform }}</span>
+                        </div>
+
+                        {# URL - desktop only #}
+                        <a href="{{ link.url }}" target="_blank" class="hidden sm:block text-purple-400 hover:text-purple-300 transition text-sm truncate min-w-0 flex-1">
+                            {{ link.url }}
+                        </a>
+
+                        {# Status toggle - desktop only #}
+                        <form method="post" action="{{ path('app_admin_settings_social_link_toggle', {id: link.id}) }}" class="hidden sm:block shrink-0">
+                            <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ link.id) }}">
+                            <button type="submit" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition
+                                {{ link.active ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30' }}">
+                                {{ link.active ? 'Actif' : 'Inactif' }}
+                            </button>
+                        </form>
+
+                        {# Actions - desktop only #}
+                        <div class="hidden sm:flex items-center space-x-2 shrink-0">
+                            <a href="{{ path('app_admin_settings_social_link_edit', {id: link.id}) }}"
+                               class="p-2 border border-slate-600 rounded-md text-slate-400 hover:text-white hover:border-slate-400 transition" title="Modifier">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+                            <form method="post" action="{{ path('app_admin_settings_social_link_delete', {id: link.id}) }}" class="inline"
+                                  onsubmit="return confirm('Supprimer ce réseau social ?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ link.id) }}">
+                                <button type="submit" class="p-2 border border-red-900/50 rounded-md text-red-400 hover:text-red-300 hover:border-red-700 transition" title="Supprimer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    {# Row 2 (mobile only): URL + Status + Actions #}
+                    <div class="sm:hidden mt-3 space-y-3">
+                        <a href="{{ link.url }}" target="_blank" class="text-purple-400 hover:text-purple-300 transition text-sm truncate block">
+                            {{ link.url }}
+                        </a>
+                        <div class="flex items-center justify-between">
+                            <form method="post" action="{{ path('app_admin_settings_social_link_toggle', {id: link.id}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ link.id) }}">
+                                <button type="submit" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition
+                                    {{ link.active ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30' : 'bg-slate-500/20 text-slate-400 hover:bg-slate-500/30' }}">
+                                    {{ link.active ? 'Actif' : 'Inactif' }}
+                                </button>
+                            </form>
+                            <div class="flex items-center space-x-2">
+                                <a href="{{ path('app_admin_settings_social_link_edit', {id: link.id}) }}"
+                                   class="p-2 border border-slate-600 rounded-md text-slate-400 hover:text-white hover:border-slate-400 transition" title="Modifier">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                <form method="post" action="{{ path('app_admin_settings_social_link_delete', {id: link.id}) }}" class="inline"
+                                      onsubmit="return confirm('Supprimer ce réseau social ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ link.id) }}">
+                                    <button type="submit" class="p-2 border border-red-900/50 rounded-md text-red-400 hover:text-red-300 hover:border-red-700 transition" title="Supprimer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}
