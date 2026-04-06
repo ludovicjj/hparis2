@@ -21,40 +21,40 @@ class ImageOptimizerService
     }
 
     /**
-     * Optimise une image : crée version lightbox + thumbnail
+     * Resize a raw binary image into two JPEG variants entirely in memory:
+     *  - lightbox: scaled down to BIG_WIDTH (1200px)
+     *  - thumbnail: scaled down further to SMALL_WIDTH (400px)
      *
-     * @param string $sourcePath Original file path (temp file)
-     * @param string $destinationDir Dossier de destination
-     * @param string $filename Unique filename
-     * @return array{lightbox: string, thumbnail: string} Les noms des fichiers créés
+     * Both variants are returned as raw JPEG binary strings, ready to be uploaded
+     * to object storage. No temporary files are written to disk.
+     *
+     * @return array{lightbox: string, thumbnail: string}
      */
-    public function optimizePicture(string $sourcePath, string $destinationDir, string $filename): array
+    public function optimizePicture(string $sourceContent): array
     {
-        $fileInfo = pathinfo($filename);
-        $lightboxFilename = $filename;
-        $thumbnailFilename = $fileInfo['filename'] . '-thumb.' . $fileInfo['extension'];
+        $image = $this->manager->read($sourceContent);
 
-        // 1. Read temp File
-        $image = $this->manager->read($sourcePath);
-
-        // 2. Create and upload lightbox version (1200px)
+        // Lightbox variant (1200px max)
         $image->scaleDown(width: self::BIG_WIDTH);
-        $image->toJpeg(quality: self::QUALITY)->save($destinationDir . '/' . $lightboxFilename);
+        $lightboxBinary = (string) $image->toJpeg(quality: self::QUALITY);
 
-        // 3. Create and upload thumbnail version (400px)
+        // Thumbnail variant (400px max). The same image instance is reused: scaling
+        // a 1200px image down to 400px keeps quality and is ~3x faster than
+        // re-decoding the original.
         $image->scaleDown(width: self::SMALL_WIDTH);
-        $image->toJpeg(quality: self::QUALITY)->save($destinationDir . '/' . $thumbnailFilename);
+        $thumbnailBinary = (string) $image->toJpeg(quality: self::QUALITY);
 
         return [
-            'lightbox' => $lightboxFilename,
-            'thumbnail' => $thumbnailFilename,
+            'lightbox' => $lightboxBinary,
+            'thumbnail' => $thumbnailBinary,
         ];
     }
 
-    public function optimizeThumbnail(string $sourcePath, string $destinationDir, string $filename, int $width): void
+    public function optimizeThumbnail(string $sourceContent, int $maxWidth): string
     {
-        $image = $this->manager->read($sourcePath);
-        $image->scaleDown(width: $width);
-        $image->toJpeg(quality: self::QUALITY)->save($destinationDir . '/' . $filename);
+        $image = $this->manager->read($sourceContent);
+        $image->scaleDown(width: $maxWidth);
+
+        return (string) $image->toJpeg(quality: self::QUALITY);
     }
 }

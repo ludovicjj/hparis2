@@ -38,9 +38,9 @@
             data-has-more="{{ hasMore ? 'true' : 'false' }}"
         >
             {% for picture in pictures %}
-                <a href="{{ picture.lightboxPath }}" class="glightbox aspect-square overflow-hidden bg-gray-100 block relative group">
+                <a href="{{ s3_url(picture.lightboxPath) }}" class="glightbox aspect-square overflow-hidden bg-gray-100 block relative group">
                     <img
-                        src="{{ picture.thumbnailPath }}"
+                        src="{{ s3_url(picture.thumbnailPath) }}"
                         alt="{{ picture.originalName }}"
                         class="w-full h-full object-cover cursor-pointer"
                         loading="lazy"

@@ -47,13 +47,6 @@ class Picture
     private ?User $createdBy = null;
 
     /**
-     * Temp path (original file, will be deleted after async processing)
-     * @var string|null
-     */
-    #[ORM\Column(length: 255, nullable: true)]
-    private ?string $tempPath = null;
-
-    /**
      * Lightbox path (1200px)
      * @var string|null
      */
@@ -173,18 +166,6 @@ class Picture
     public function getCreatedBy(): ?User
     {
         return $this->createdBy;
-    }
-
-    public function getTempPath(): ?string
-    {
-        return $this->tempPath;
-    }
-
-    public function setTempPath(?string $tempPath): static
-    {
-        $this->tempPath = $tempPath;
-
-        return $this;
     }
 
     public function getLightboxPath(): ?string

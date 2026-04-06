@@ -48,10 +48,12 @@ class GalleryController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // Handle Thumbnail from form data
-            $thumbnailService->handle($form);
-
+            // Persist immediately gallery. S3 path required gallery ID
             $entityManager->persist($gallery);
+            $entityManager->flush();
+
+            // Handle the cover upload
+            $thumbnailService->handle($form);
             $entityManager->flush();
 
             $this->addFlash('success', 'Votre galerie est prête !');
@@ -113,17 +115,17 @@ class GalleryController extends AbstractController
         ThumbnailService $thumbnailService
     ): Response {
         if ($this->isCsrfTokenValid('delete' . $gallery->getId(), $request->request->get('_token'))) {
-            // Remove la thumbnail
+            // Remove la thumbnail S3
             if ($gallery->getThumbnail()) {
                 $thumbnailService->deleteFile($gallery->getThumbnail());
             }
 
-            // Remove pictures
+            // Remove pictures S3 (TODO)
             foreach ($gallery->getPictures() as $picture) {
                 $pictureService->deleteFile($picture);
             }
 
-            // Will delete Thumbnail + Pictures (cascade)
+            // Remove Gallery - cascade delete Thumbnail and Pictures
             $entityManager->remove($gallery);
             $entityManager->flush();
 

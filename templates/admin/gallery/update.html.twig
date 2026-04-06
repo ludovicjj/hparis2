@@ -84,7 +84,7 @@
                         >
                             {% if gallery.thumbnail %}
                                 <div id="thumbnail-preview">
-                                    <img id="thumbnail-img" src="{{ gallery.thumbnail.path }}" alt="Aperçu" class="max-h-48 mx-auto rounded-lg mb-2">
+                                    <img id="thumbnail-img" src="{{ s3_url(gallery.thumbnail.filename) }}" alt="Aperçu" class="max-h-48 mx-auto rounded-lg mb-2">
                                     <p class="text-slate-400 text-sm">Cliquez pour changer l'image</p>
                                 </div>
                                 <div id="thumbnail-placeholder" class="hidden">
@@ -165,9 +165,14 @@
                                 <span class="text-red-400 text-xs text-center px-2">Erreur de traitement</span>
                             </div>
                         {% elseif picture.status == 'processing' %}
-                            <img src="/uploads{{ picture.tempPath }}" alt="{{ picture.originalName }}" class="w-full h-full object-cover rounded-lg">
+                            <div class="w-full h-full bg-slate-800 border-2 border-slate-600/50 rounded-lg flex flex-col items-center justify-center animate-pulse">
+                                <svg class="w-8 h-8 text-slate-400 mb-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v4m0 8v4m8-8h-4M8 12H4m13.66-5.66l-2.83 2.83M9.17 14.83l-2.83 2.83m0-11.32l2.83 2.83m5.66 5.66l2.83 2.83"/>
+                                </svg>
+                                <span class="text-slate-400 text-xs text-center px-2">Traitement…</span>
+                            </div>
                         {% else %}
-                            <img src="{{ picture.thumbnailPath }}" alt="{{ picture.originalName }}" class="w-full h-full object-cover rounded-lg">
+                            <img src="{{ s3_url(picture.thumbnailPath) }}" alt="{{ picture.originalName }}" class="w-full h-full object-cover rounded-lg">
                         {% endif %}
                         <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition rounded-lg flex items-center justify-center">
                             <button type="button"
