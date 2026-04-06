@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\admin\User;
+namespace App\Controller\Admin\User;
 
 use App\Repository\UserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

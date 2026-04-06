@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\admin\Gallery;
+namespace App\Controller\Admin\Gallery;
 
 use App\Entity\Gallery;
 use App\Entity\Picture;
@@ -13,12 +13,12 @@ use App\Service\PictureService;
 use App\Service\ThumbnailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\Messenger\Exception\ExceptionInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Messenger\Exception\ExceptionInterface;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 

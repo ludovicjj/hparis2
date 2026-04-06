@@ -1,15 +1,13 @@
 <?php
 
-namespace App\Controller\admin\Picture;
+namespace App\Controller\Admin\Picture;
 
 use App\Entity\Picture;
 use App\Service\PictureService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use Exception;
 
 #[Route('/admin/api/picture', name: 'api_picture_')]
 #[IsGranted('ROLE_ADMIN')]
