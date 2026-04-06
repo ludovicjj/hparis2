@@ -9,6 +9,7 @@
         "ext-gd": "*",
         "ext-iconv": "*",
         "ext-openssl": "*",
+        "aws/aws-sdk-php": "^3.376",
         "beberlei/doctrineextensions": "^1.5",
         "doctrine/doctrine-bundle": "^3.1",
         "doctrine/doctrine-migrations-bundle": "^4.0",
