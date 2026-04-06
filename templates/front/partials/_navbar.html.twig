@@ -1,9 +1,10 @@
-<nav class="bg-white border-b border-gray-200">
+<nav class="bg-white border-b border-gray-200" data-navbar>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <div class="text-2xl font-bold text-gray-900">
                 <a href="{{ path('app_front_home') }}">Hollywood Paris</a>
             </div>
+
             <div class="hidden md:flex space-x-8">
                 <a href="{{ path('app_front_home') }}" class="text-gray-600 hover:text-gray-900 transition">Accueil</a>
                 <a href="{{ path('app_front_gallery_index') }}" class="text-gray-600 hover:text-gray-900 transition">Galleries</a>
@@ -11,9 +12,62 @@
                 <a href="#" class="text-gray-600 hover:text-gray-900 transition">Contact</a>
             </div>
 
-            <a href="{{ path('app_login') }}" class="bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition">
+            <a href="{{ path('app_login') }}" class="hidden md:inline-block bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg transition">
                 {% if app.user %}Adminstration{% else %}Connexion{% endif %}
             </a>
+
+            <button type="button"
+                    class="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+                    aria-label="Ouvrir le menu"
+                    aria-expanded="false"
+                    data-navbar-toggle>
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+            </button>
+        </div>
+
+    </div>
+
+    <div class="hidden md:hidden fixed inset-0 z-50 bg-black/60" data-navbar-menu>
+        <div class="absolute top-0 right-0 h-full w-full bg-white shadow-xl flex flex-col">
+            <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
+                <span class="text-lg font-bold text-gray-900">Menu</span>
+                <button type="button"
+                        class="inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+                        aria-label="Fermer le menu"
+                        data-navbar-close
+                >
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M6 18L18 6"/>
+                    </svg>
+                </button>
+            </div>
+            <nav class="flex-1 overflow-y-auto px-4 py-8 space-y-6">
+                <a href="{{ path('app_front_home') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Accueil</a>
+                <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
+                <a href="{{ path('app_front_gallery_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Galleries</a>
+                <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
+                <a href="#" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Services</a>
+                <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
+                <a href="#" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Contact</a>
+            </nav>
+            <div class="px-4 py-4 border-t border-gray-200 space-y-4">
+                {% set links = social_links() %}
+                {% if links is not empty %}
+                    <div class="flex items-center justify-center space-x-6">
+                        {% for link in links %}
+                            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer"
+                               class="text-gray-500 hover:text-gray-900 transition" aria-label="{{ link.platform }}">
+                                {{ include('partials/icons/' ~ link.platform ~ '.html.twig', {class: 'w-6 h-6'}, ignore_missing=true) }}
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                <a href="{{ path('app_login') }}" class="block px-3 py-2 rounded bg-gray-900 hover:bg-gray-800 text-white text-center transition">
+                    {% if app.user %}Adminstration{% else %}Connexion{% endif %}
+                </a>
+            </div>
         </div>
     </div>
 </nav>
