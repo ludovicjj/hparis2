@@ -7,8 +7,8 @@ use App\Entity\Picture;
 use App\Repository\PictureRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
+use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\String\Slugger\SluggerInterface;
@@ -22,10 +22,9 @@ readonly class PictureService
         private RequestStack $requestStack,
         private PictureRepository $pictureRepository,
         private SluggerInterface $slugger,
-        private Filesystem $filesystem,
         private EntityManagerInterface $entityManager,
         private Security $security,
-        private string $uploadDirectory,
+        private S3Service $s3Service,
     ) {
     }
 
@@ -58,6 +57,15 @@ readonly class PictureService
         }
     }
 
+    /**
+     * Upload a new picture for a gallery:
+     *  - validates the file
+     *  - persists a Picture entity (status=processing)
+     *  - uploads the original binary to S3 under temp/{pictureId}.jpg
+     *  - returns the Picture so the controller can dispatch the async resize message
+     *
+     * Final lightbox + thumbnail variants are produced asynchronously by ProcessPictureHandler.
+     */
     public function createFromUpload(?UploadedFile $file, Gallery $gallery): Picture
     {
         // 1 - Validate
@@ -66,25 +74,22 @@ readonly class PictureService
             throw new InvalidArgumentException($error);
         }
 
-        // 2 - Generate unique filename
+        // 2 - Generate the canonical filename used for the final S3 keys.
+        //     Always .jpg because the worker re-encodes everything to JPEG.
         $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
-        $extension = strtolower($file->guessExtension() ?? $file->getClientOriginalExtension());
-        $filename = $this->generateUniqueFilename($originalName, $extension);
+        $filename = $this->generateUniqueFilename($originalName);
 
-        // 3 - Save to /temp/
-        $tempDir = $this->uploadDirectory . '/temp';
-        $this->filesystem->mkdir($tempDir);
-        $file->move($tempDir, $filename);
+        // 3 - Read the upload binary into memory once. Browser already compressed it
+        //     to ~1 MB so this is cheap.
+        $content = $file->getContent();
 
-        // 4 - fetch next position
+        // 4 - Persist the Picture first so we get an id (needed for the temp S3 key).
         $position = $this->pictureRepository->findMaxPositionByGallery($gallery) + 1;
 
-        // 5 - Create Picture entity
         $picture = new Picture();
         $picture->setFilename($filename);
         $picture->setOriginalName($originalName);
-        $picture->setType($extension);
-        $picture->setTempPath('/temp/' . $filename);
+        $picture->setType('jpg');
         $picture->setGallery($gallery);
         $picture->setCreatedBy($this->security->getUser());
         $picture->setPosition($position);
@@ -92,67 +97,66 @@ readonly class PictureService
         $this->entityManager->persist($picture);
         $this->entityManager->flush();
 
+        // 5 - Upload the original binary to S3 under the deterministic temp key.
+        //     If this fails, roll back the Picture entity so we don't leave an orphan.
+        $tempKey = $this->buildTempKey($picture);
+        if (!$this->s3Service->uploadPrivateFile($tempKey, $content, $file->getMimeType())) {
+            $this->entityManager->remove($picture);
+            $this->entityManager->flush();
+            throw new RuntimeException('Failed to upload picture to S3.');
+        }
+
         return $picture;
     }
 
     /**
-     * Delete a picture entity and all associated files
+     * Delete a picture entity and all associated S3 objects.
      */
     public function delete(Picture $picture): void
     {
-        // delete file
         $this->deleteFile($picture);
 
-        // delete entity
         $this->entityManager->remove($picture);
         $this->entityManager->flush();
     }
 
     /**
-     * Delete only the files (not the entity)
+     * Delete every S3 object associated with a picture (temp + lightbox + thumbnail).
+     * Does not touch the Picture entity. Safe to call on a partially-processed picture.
      */
     public function deleteFile(Picture $picture): void
     {
-        // Delete temp file (if still processing)
-        $tempPath = $picture->getTempPath();
-        if ($tempPath) {
-            $absoluteTempPath = $this->uploadDirectory . '/' . ltrim($tempPath, '/');
-            if ($this->filesystem->exists($absoluteTempPath)) {
-                $this->filesystem->remove($absoluteTempPath);
-            }
+        // Temp file: only present while the picture is still processing.
+        if ($picture->getStatus() === Picture::STATUS_PROCESSING) {
+            $tempKey = $this->buildTempKey($picture);
+            $this->s3Service->deleteFile($tempKey);
         }
 
-        // Delete lightbox image
-        $lightboxPath = $picture->getLightboxPath();
-        if ($lightboxPath) {
-            $absoluteLightboxPath = $this->getAbsolutePath($lightboxPath);
-            if ($this->filesystem->exists($absoluteLightboxPath)) {
-                $this->filesystem->remove($absoluteLightboxPath);
-            }
+        $lightboxKey = $picture->getLightboxPath();
+        if ($lightboxKey) {
+            $this->s3Service->deleteFile($lightboxKey);
         }
 
-        // Delete thumbnail image
-        $thumbnailPath = $picture->getThumbnailPath();
-        if ($thumbnailPath) {
-            $absoluteThumbnailPath = $this->getAbsolutePath($thumbnailPath);
-            if ($this->filesystem->exists($absoluteThumbnailPath)) {
-                $this->filesystem->remove($absoluteThumbnailPath);
-            }
+        $thumbnailKey = $picture->getThumbnailPath();
+        if ($thumbnailKey) {
+            $this->s3Service->deleteFile($thumbnailKey);
         }
     }
 
-    private function generateUniqueFilename(string $originalName, string $extension): string
+    /**
+     * Build the deterministic S3 key used to store the temporary original of a picture
+     * between upload and async processing. Shared by PictureService and ProcessPictureHandler.
+     */
+    public static function buildTempKey(Picture $picture): string
+    {
+        return 'temp/' . $picture->getId() . '.jpg';
+    }
+
+    private function generateUniqueFilename(string $originalName): string
     {
         $safeFilename = $this->slugger->slug($originalName)->slice(0, 100);
 
-        return $safeFilename . '-' . uniqid() . '.' . $extension;
-    }
-
-    private function getAbsolutePath(string $relativePath): string
-    {
-        $relativePath = ltrim($relativePath, '/');
-
-        return dirname($this->uploadDirectory) . '/' . $relativePath;
+        return $safeFilename . '-' . uniqid() . '.jpg';
     }
 
     /**

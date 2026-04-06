@@ -9,13 +9,15 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\HasLifecycleCallbacks]
 class Thumbnail
 {
-    public const string THUMBNAIL_DIR = '/uploads/thumbnails/';
-
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
 
+    /**
+     * S3 object key (e.g. "galleries/42/cover/printemps-abc123.jpg").
+     * Use the s3_url() Twig function to build the public URL from this.
+     */
     #[ORM\Column(length: 255)]
     private ?string $filename = null;
 
@@ -101,10 +103,5 @@ class Thumbnail
         $this->gallery = $gallery;
 
         return $this;
-    }
-
-    public function getPath(): string
-    {
-        return self::THUMBNAIL_DIR . $this->filename;
     }
 }
