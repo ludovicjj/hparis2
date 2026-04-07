@@ -103,10 +103,16 @@ export class PicturesManager {
     }
 
     /**
-     * Upload files sequentially with client-side compression
+     * Upload files sequentially using the direct-to-S3 flow:
+     *   1. compress client-side
+     *   2. POST /prepare → backend persists Picture (processing) and returns a presigned PUT URL
+     *   3. PUT the binary directly to S3 (PHP not in the path)
+     *   4. POST /uploaded → backend dispatches the async resize worker
+     *
+     * If any step fails after step 2, the orphan Picture entity is rolled back via DELETE.
      */
     async handleUpload(fileList) {
-        const url = this.dropzone.dataset.uploadUrl;
+        const prepareUrl = this.dropzone.dataset.prepareUrl;
 
         // Convert FileList to Array
         const files = Array.from(fileList);
@@ -130,8 +136,6 @@ export class PicturesManager {
         // Create abort controller for this upload batch
         this.abortController = new AbortController();
 
-        let totalUploadTime = 0;
-
         for (const file of files) {
             // Step 1: Compress the image
             this.status.textContent = `Compression de ${file.name}...`;
@@ -142,35 +146,16 @@ export class PicturesManager {
             // Step 2: Create blob URL for local preview
             const blobUrl = URL.createObjectURL(compressedFile);
 
-            // Step 3: Upload the compressed image
+            // Step 3: prepare → PUT → confirm
             this.status.textContent = `Upload de ${file.name}...`;
 
             try {
-                const formData = new FormData();
-                formData.append('file', compressedFile, file.name); // Keep original filename
-
-                const uploadStart = performance.now();
-                const response = await fetch(url, {
-                    method: 'POST',
-                    body: formData,
-                    signal: this.abortController.signal
-                });
-
-                const data = await response.json();
-                const uploadTime = performance.now() - uploadStart;
-                totalUploadTime += uploadTime;
-
-                if (data.success) {
-                    this.addPictureToGrid(data.id, blobUrl, data.originalName);
-                    this.pictureIds.push(data.id);
-                    this.updateHiddenInput();
-                } else {
-                    console.error('Upload failed:', data.error);
-                    URL.revokeObjectURL(blobUrl); // Clean up on error
-                }
+                await this.uploadOne(prepareUrl, file, compressedFile, blobUrl);
             } catch (error) {
-                console.error('Upload error:', error);
-                URL.revokeObjectURL(blobUrl); // Clean up on error
+                if (error.name !== 'AbortError') {
+                    console.error('Upload error:', error);
+                }
+                URL.revokeObjectURL(blobUrl);
             }
 
             // Update UI
@@ -190,6 +175,83 @@ export class PicturesManager {
         setTimeout(() => {
             this.progress.classList.add('hidden');
         }, 2000);
+    }
+
+    /**
+     * Run the prepare → PUT → confirm sequence for a single file.
+     * Throws on any failure; the caller cleans up the blob URL.
+     */
+    async uploadOne(prepareUrl, originalFile, compressedFile, blobUrl) {
+        const contentType = compressedFile.type || 'image/jpeg';
+
+        // 1. prepare picture, create entity and init pre-signed url
+        const prepareResponse = await fetch(prepareUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                filename: originalFile.name,
+                contentType: contentType,
+            }),
+            signal: this.abortController.signal,
+        });
+
+        const prepareData = await prepareResponse.json();
+        if (!prepareData.success) {
+            throw new Error(prepareData.error || 'Echec de la préparation');
+        }
+
+        const { pictureId, uploadUrl, originalName } = prepareData;
+
+        // 2. PUT the binary directly to S3.
+        try {
+            const putResponse = await fetch(uploadUrl, {
+                method: 'PUT',
+                headers: { 'Content-Type': contentType },
+                body: compressedFile,
+                signal: this.abortController.signal,
+            });
+
+            if (!putResponse.ok) {
+                throw new Error(`S3 PUT failed: ${putResponse.status}`);
+            }
+        } catch (error) {
+            // Roll back the orphan Picture entity (and any temp file that may exist).
+            await this.rollbackPicture(pictureId);
+            throw error;
+        }
+
+        // 3. Confirm: backend dispatches the async resize worker
+        try {
+            const confirmResponse = await fetch(`/admin/api/picture/${pictureId}/uploaded`, {
+                method: 'POST',
+                signal: this.abortController.signal,
+            });
+
+            const confirmData = await confirmResponse.json();
+            if (!confirmData.success) {
+                throw new Error(confirmData.error || 'Echec de la confirmation');
+            }
+        } catch (error) {
+            await this.rollbackPicture(pictureId);
+            throw error;
+        }
+
+        // 4. UI: show the local preview and track the id
+        this.addPictureToGrid(pictureId, blobUrl, originalName);
+        this.pictureIds.push(pictureId);
+        this.updateHiddenInput();
+    }
+
+    /**
+     * Best-effort cleanup of an orphan Picture entity. Failures are swallowed because
+     * the periodic cleanup command will pick up anything we miss.
+     */
+    async rollbackPicture(pictureId) {
+        try {
+            await fetch(`/admin/api/picture/${pictureId}`, { method: 'DELETE' });
+        } catch (error) {
+            console.warn('Rollback failed for picture', pictureId, error);
+        }
     }
 
     setSubmitEnabled(enabled) {

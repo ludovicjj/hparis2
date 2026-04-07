@@ -7,16 +7,13 @@ use App\Entity\Picture;
 use App\Repository\PictureRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
-use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\String\Slugger\SluggerInterface;
 
 readonly class PictureService
 {
     private const array ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'];
-    private const int MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
     public function __construct(
         private RequestStack $requestStack,
@@ -58,32 +55,29 @@ readonly class PictureService
     }
 
     /**
-     * Upload a new picture for a gallery:
-     *  - validates the file
-     *  - persists a Picture entity (status=processing)
-     *  - uploads the original binary to S3 under temp/{pictureId}.jpg
-     *  - returns the Picture so the controller can dispatch the async resize message
+     * Prepare a direct-to-S3 upload:
+     *  - validates filename and content-type (no binary involved here)
+     *  - persists a Picture entity (status=processing) to obtain its id
+     *  - generates a short-lived presigned PUT URL pinned to the negotiated content-type
      *
-     * Final lightbox + thumbnail variants are produced asynchronously by ProcessPictureHandler.
+     * The browser then PUTs the binary directly to S3 and finally calls
+     * PictureController::confirmUploaded() to dispatch ProcessPictureMessage.
+     *
+     * @return array{picture: Picture, uploadUrl: string}
      */
-    public function createFromUpload(?UploadedFile $file, Gallery $gallery): Picture
+    public function prepareUpload(string $originalFilename, string $contentType, Gallery $gallery): array
     {
-        // 1 - Validate
-        $error = $this->validate($file);
-        if ($error) {
-            throw new InvalidArgumentException($error);
+        if (trim($originalFilename) === '') {
+            throw new InvalidArgumentException('Nom de fichier manquant');
         }
 
-        // 2 - Generate the canonical filename used for the final S3 keys.
-        //     Always .jpg because the worker re-encodes everything to JPEG.
-        $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+        if (!in_array($contentType, self::ALLOWED_MIME_TYPES, true)) {
+            throw new InvalidArgumentException('Type de fichier non autorisé');
+        }
+
+        $originalName = pathinfo($originalFilename, PATHINFO_FILENAME);
         $filename = $this->generateUniqueFilename($originalName);
 
-        // 3 - Read the upload binary into memory once. Browser already compressed it
-        //     to ~1 MB so this is cheap.
-        $content = $file->getContent();
-
-        // 4 - Persist the Picture first so we get an id (needed for the temp S3 key).
         $position = $this->pictureRepository->findMaxPositionByGallery($gallery) + 1;
 
         $picture = new Picture();
@@ -94,19 +88,17 @@ readonly class PictureService
         $picture->setCreatedBy($this->security->getUser());
         $picture->setPosition($position);
 
+        // Persist first so we get an id (needed for the temp S3 key).
         $this->entityManager->persist($picture);
         $this->entityManager->flush();
 
-        // 5 - Upload the original binary to S3 under the deterministic temp key.
-        //     If this fails, roll back the Picture entity so we don't leave an orphan.
-        $tempKey = $this->buildTempKey($picture);
-        if (!$this->s3Service->uploadPrivateFile($tempKey, $content, $file->getMimeType())) {
-            $this->entityManager->remove($picture);
-            $this->entityManager->flush();
-            throw new RuntimeException('Failed to upload picture to S3.');
-        }
+        $tempKey = self::buildTempKey($picture);
+        $uploadUrl = $this->s3Service->createPresignedPutUrl($tempKey, $contentType);
 
-        return $picture;
+        return [
+            'picture' => $picture,
+            'uploadUrl' => $uploadUrl,
+        ];
     }
 
     /**
@@ -157,29 +149,5 @@ readonly class PictureService
         $safeFilename = $this->slugger->slug($originalName)->slice(0, 100);
 
         return $safeFilename . '-' . uniqid() . '.jpg';
-    }
-
-    /**
-     * Validate an uploaded file
-     */
-    private function validate(?UploadedFile $file): ?string
-    {
-        if (!$file) {
-            return 'Aucun fichier reçu';
-        }
-
-        if (!$file->isValid()) {
-            return $file->getErrorMessage();
-        }
-
-        if (!in_array($file->getMimeType(), self::ALLOWED_MIME_TYPES)) {
-            return 'Type de fichier non autorisé';
-        }
-
-        if ($file->getSize() > self::MAX_FILE_SIZE) {
-            return 'Fichier trop volumineux (max 20 Mo)';
-        }
-
-        return null;
     }
 }

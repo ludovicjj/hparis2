@@ -145,6 +145,24 @@ class S3Service
     }
 
     /**
+     * Generate a time-limited presigned PUT URL so the browser can upload a binary
+     * directly to S3 without going through PHP. The signed URL pins the Content-Type
+     * so the client is forced to PUT exactly what was negotiated.
+     */
+    public function createPresignedPutUrl(string $key, string $contentType, string $expiration = '+15 minutes'): string
+    {
+        $cmd = $this->client->getCommand('PutObject', [
+            'Bucket' => $this->bucket,
+            'Key' => $key,
+            'ContentType' => $contentType,
+        ]);
+
+        $request = $this->client->createPresignedRequest($cmd, $expiration);
+
+        return (string) $request->getUri();
+    }
+
+    /**
      * Generate a time-limited presigned URL for an object. Kept for future use cases
      * where we might want private downloads.
      */
