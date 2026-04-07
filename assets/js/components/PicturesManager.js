@@ -102,12 +102,20 @@ export class PicturesManager {
         }
     }
 
+    // Number of files uploaded in parallel. Capped at 6 because most browsers
+    // limit concurrent connections per origin to ~6.
+    static UPLOAD_CONCURRENCY = 4;
+
     /**
-     * Upload files sequentially using the direct-to-S3 flow:
+     * Upload files in parallel using the direct-to-S3 flow:
      *   1. compress client-side
      *   2. POST /prepare → backend persists Picture (processing) and returns a presigned PUT URL
      *   3. PUT the binary directly to S3 (PHP not in the path)
      *   4. POST /uploaded → backend dispatches the async resize worker
+     *
+     * Files are processed by a pool of workers (UPLOAD_CONCURRENCY) pulling from
+     * a shared cursor. Completion order is not guaranteed; the grid is Sortable
+     * anyway so the admin can reorder afterwards.
      *
      * If any step fails after step 2, the orphan Picture entity is rolled back via DELETE.
      */
@@ -116,10 +124,7 @@ export class PicturesManager {
 
         // Convert FileList to Array
         const files = Array.from(fileList);
-
-        // Total and Uploaded files count
         const totalFiles = files.length;
-        let uploadedCount = 0;
 
         if (totalFiles === 0) {
             return;
@@ -129,6 +134,8 @@ export class PicturesManager {
         this.progress.classList.remove('hidden');
         // init progress bar
         this.bar.style.width = '0%';
+        this.count.textContent = `0/${totalFiles}`;
+        this.status.textContent = `Upload en cours (${totalFiles} fichier${totalFiles > 1 ? 's' : ''})...`;
 
         // Disable submit button during upload
         this.setSubmitEnabled(false);
@@ -136,34 +143,36 @@ export class PicturesManager {
         // Create abort controller for this upload batch
         this.abortController = new AbortController();
 
-        for (const file of files) {
-            // Step 1: Compress the image
-            this.status.textContent = `Compression de ${file.name}...`;
-            this.count.textContent = `${uploadedCount}/${totalFiles}`;
+        // Shared state across the worker pool
+        let cursor = 0;
+        let uploadedCount = 0;
 
-            const compressedFile = await this.compressImage(file);
+        const worker = async () => {
+            while (true) {
+                const index = cursor++;
+                if (index >= totalFiles) return;
 
-            // Step 2: Create blob URL for local preview
-            const blobUrl = URL.createObjectURL(compressedFile);
+                const file = files[index];
+                const compressedFile = await this.compressImage(file);
+                const blobUrl = URL.createObjectURL(compressedFile);
 
-            // Step 3: prepare → PUT → confirm
-            this.status.textContent = `Upload de ${file.name}...`;
-
-            try {
-                await this.uploadOne(prepareUrl, file, compressedFile, blobUrl);
-            } catch (error) {
-                if (error.name !== 'AbortError') {
-                    console.error('Upload error:', error);
+                try {
+                    await this.uploadOne(prepareUrl, file, compressedFile, blobUrl);
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        console.error('Upload error:', error);
+                    }
+                    URL.revokeObjectURL(blobUrl);
                 }
-                URL.revokeObjectURL(blobUrl);
-            }
 
-            // Update UI
-            uploadedCount++;
-            const progressPercent = (uploadedCount / totalFiles) * 100;
-            this.bar.style.width = `${progressPercent}%`;
-            this.count.textContent = `${uploadedCount}/${totalFiles}`;
-        }
+                uploadedCount++;
+                this.bar.style.width = `${(uploadedCount / totalFiles) * 100}%`;
+                this.count.textContent = `${uploadedCount}/${totalFiles}`;
+            }
+        };
+
+        const poolSize = Math.min(PicturesManager.UPLOAD_CONCURRENCY, totalFiles);
+        await Promise.all(Array.from({ length: poolSize }, () => worker()));
 
         // Display finish message
         this.status.textContent = 'Upload terminé !';
@@ -184,7 +193,7 @@ export class PicturesManager {
     async uploadOne(prepareUrl, originalFile, compressedFile, blobUrl) {
         const contentType = compressedFile.type || 'image/jpeg';
 
-        // 1. prepare picture, create entity and init pre-signed url
+        // Init picture and generate pre-signed URL
         const prepareResponse = await fetch(prepareUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -202,7 +211,7 @@ export class PicturesManager {
 
         const { pictureId, uploadUrl, originalName } = prepareData;
 
-        // 2. PUT the binary directly to S3.
+        // PUT the binary directly to S3.
         try {
             const putResponse = await fetch(uploadUrl, {
                 method: 'PUT',
@@ -220,7 +229,7 @@ export class PicturesManager {
             throw error;
         }
 
-        // 3. Confirm: backend dispatches the async resize worker
+        // CDispatches the async resize worker
         try {
             const confirmResponse = await fetch(`/admin/api/picture/${pictureId}/uploaded`, {
                 method: 'POST',
