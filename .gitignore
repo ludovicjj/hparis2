@@ -24,4 +24,5 @@ yarn-error.log
 ###> other ###
 CLAUDE.md
 .claude
+cors.json
 ###< other ###

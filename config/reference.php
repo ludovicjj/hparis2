@@ -128,7 +128,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     http_method_override?: bool, // Set true to enable support for the '_method' request parameter to determine the intended HTTP method on POST requests. // Default: false
  *     allowed_http_method_override?: list<string>|null,
  *     trust_x_sendfile_type_header?: scalar|null, // Set true to enable support for xsendfile in binary file responses. // Default: "%env(bool:default::SYMFONY_TRUST_X_SENDFILE_TYPE_HEADER)%"
- *     ide?: scalar|null, // Default: "%env(default::SYMFONY_IDE)%"
+ *     ide?: scalar|null, // Default: null
  *     test?: bool,
  *     default_locale?: scalar|null, // Default: "en"
  *     set_locale_from_accept_language?: bool, // Whether to use the Accept-Language HTTP header to set the Request locale (only when the "_locale" request attribute is not passed). // Default: false
@@ -282,7 +282,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         paths?: array<string, scalar|null>,
  *         excluded_patterns?: list<scalar|null>,
  *         exclude_dotfiles?: bool, // If true, any files starting with "." will be excluded from the asset mapper. // Default: true
- *         server?: bool, // If true, a "dev server" will return the assets from the public directory (true in "debug" mode only by default). // Default: true
+ *         server?: bool, // If true, a "dev server" will return the assets from the public directory (true in "debug" mode only by default). // Default: false
  *         public_prefix?: scalar|null, // The public path where the assets will be written to (and served from when "server" is true). // Default: "/assets/"
  *         missing_import_mode?: "strict"|"warn"|"ignore", // Behavior if an asset cannot be found when imported from JavaScript or CSS files - e.g. "import './non-existent.js'". "strict" means an exception is thrown, "warn" means a warning is logged, "ignore" means the import is left as-is. // Default: "warn"
  *         extensions?: array<string, scalar|null>,
@@ -398,7 +398,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     },
  *     php_errors?: array{ // PHP errors handling configuration
  *         log?: mixed, // Use the application logger instead of the PHP logger for logging PHP errors. // Default: true
- *         throw?: bool, // Throw PHP errors as \ErrorException instances. // Default: true
+ *         throw?: bool, // Throw PHP errors as \ErrorException instances. // Default: false
  *     },
  *     exceptions?: array<string, array{ // Default: []
  *         log_level?: scalar|null, // The level of log message. Null to let Symfony decide. // Default: null
@@ -461,7 +461,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     scheduler?: bool|array{ // Scheduler configuration
  *         enabled?: bool, // Default: false
  *     },
- *     disallow_search_engine_index?: bool, // Enabled by default when debug is enabled. // Default: true
+ *     disallow_search_engine_index?: bool, // Enabled by default when debug is enabled. // Default: false
  *     http_client?: bool|array{ // HTTP Client configuration
  *         enabled?: bool, // Default: false
  *         max_host_connections?: int, // The maximum number of connections to a single host.
@@ -762,8 +762,8 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *             driver?: scalar|null, // Default: "pdo_mysql"
  *             auto_commit?: bool,
  *             schema_filter?: scalar|null,
- *             logging?: bool, // Default: true
- *             profiling?: bool, // Default: true
+ *             logging?: bool, // Default: false
+ *             profiling?: bool, // Default: false
  *             profiling_collect_backtrace?: bool, // Enables collecting backtraces when profiling is enabled // Default: false
  *             profiling_collect_schema_errors?: bool, // Enables collecting schema errors when profiling is enabled // Default: true
  *             server_version?: scalar|null,
@@ -861,7 +861,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *                     pool?: scalar|null,
  *                 },
  *                 region_lock_lifetime?: scalar|null, // Default: 60
- *                 log_enabled?: bool, // Default: true
+ *                 log_enabled?: bool, // Default: false
  *                 region_lifetime?: scalar|null, // Default: 3600
  *                 enabled?: bool, // Default: true
  *                 factory?: scalar|null,
@@ -930,11 +930,6 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     organize_migrations?: scalar|null, // Organize migrations mode. Possible values are: "BY_YEAR", "BY_YEAR_AND_MONTH", false // Default: false
  *     enable_profiler?: bool, // Whether or not to enable the profiler collector to calculate and visualize migration status. This adds some queries overhead. // Default: false
  *     transactional?: bool, // Whether or not to wrap migrations in a single transaction. // Default: true
- * }
- * @psalm-type MakerConfig = array{
- *     root_namespace?: scalar|null, // Default: "App"
- *     generate_final_classes?: bool, // Default: true
- *     generate_final_entities?: bool, // Default: false
  * }
  * @psalm-type SecurityConfig = array{
  *     access_denied_url?: scalar|null, // Default: null
@@ -1244,6 +1239,154 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     }>,
  *     role_hierarchy?: array<string, string|list<scalar|null>>,
  * }
+ * @psalm-type MonologConfig = array{
+ *     use_microseconds?: scalar|null, // Default: true
+ *     channels?: list<scalar|null>,
+ *     handlers?: array<string, array{ // Default: []
+ *         type: scalar|null,
+ *         id?: scalar|null,
+ *         enabled?: bool, // Default: true
+ *         priority?: scalar|null, // Default: 0
+ *         level?: scalar|null, // Default: "DEBUG"
+ *         bubble?: bool, // Default: true
+ *         interactive_only?: bool, // Default: false
+ *         app_name?: scalar|null, // Default: null
+ *         include_stacktraces?: bool, // Default: false
+ *         process_psr_3_messages?: array{
+ *             enabled?: bool|null, // Default: null
+ *             date_format?: scalar|null,
+ *             remove_used_context_fields?: bool,
+ *         },
+ *         path?: scalar|null, // Default: "%kernel.logs_dir%/%kernel.environment%.log"
+ *         file_permission?: scalar|null, // Default: null
+ *         use_locking?: bool, // Default: false
+ *         filename_format?: scalar|null, // Default: "{filename}-{date}"
+ *         date_format?: scalar|null, // Default: "Y-m-d"
+ *         ident?: scalar|null, // Default: false
+ *         logopts?: scalar|null, // Default: 1
+ *         facility?: scalar|null, // Default: "user"
+ *         max_files?: scalar|null, // Default: 0
+ *         action_level?: scalar|null, // Default: "WARNING"
+ *         activation_strategy?: scalar|null, // Default: null
+ *         stop_buffering?: bool, // Default: true
+ *         passthru_level?: scalar|null, // Default: null
+ *         excluded_http_codes?: list<array{ // Default: []
+ *             code?: scalar|null,
+ *             urls?: list<scalar|null>,
+ *         }>,
+ *         accepted_levels?: list<scalar|null>,
+ *         min_level?: scalar|null, // Default: "DEBUG"
+ *         max_level?: scalar|null, // Default: "EMERGENCY"
+ *         buffer_size?: scalar|null, // Default: 0
+ *         flush_on_overflow?: bool, // Default: false
+ *         handler?: scalar|null,
+ *         url?: scalar|null,
+ *         exchange?: scalar|null,
+ *         exchange_name?: scalar|null, // Default: "log"
+ *         channel?: scalar|null, // Default: null
+ *         bot_name?: scalar|null, // Default: "Monolog"
+ *         use_attachment?: scalar|null, // Default: true
+ *         use_short_attachment?: scalar|null, // Default: false
+ *         include_extra?: scalar|null, // Default: false
+ *         icon_emoji?: scalar|null, // Default: null
+ *         webhook_url?: scalar|null,
+ *         exclude_fields?: list<scalar|null>,
+ *         token?: scalar|null,
+ *         region?: scalar|null,
+ *         source?: scalar|null,
+ *         use_ssl?: bool, // Default: true
+ *         user?: mixed,
+ *         title?: scalar|null, // Default: null
+ *         host?: scalar|null, // Default: null
+ *         port?: scalar|null, // Default: 514
+ *         config?: list<scalar|null>,
+ *         members?: list<scalar|null>,
+ *         connection_string?: scalar|null,
+ *         timeout?: scalar|null,
+ *         time?: scalar|null, // Default: 60
+ *         deduplication_level?: scalar|null, // Default: 400
+ *         store?: scalar|null, // Default: null
+ *         connection_timeout?: scalar|null,
+ *         persistent?: bool,
+ *         message_type?: scalar|null, // Default: 0
+ *         parse_mode?: scalar|null, // Default: null
+ *         disable_webpage_preview?: bool|null, // Default: null
+ *         disable_notification?: bool|null, // Default: null
+ *         split_long_messages?: bool, // Default: false
+ *         delay_between_messages?: bool, // Default: false
+ *         topic?: int, // Default: null
+ *         factor?: int, // Default: 1
+ *         tags?: list<scalar|null>,
+ *         console_formatter_options?: mixed, // Default: []
+ *         formatter?: scalar|null,
+ *         nested?: bool, // Default: false
+ *         publisher?: string|array{
+ *             id?: scalar|null,
+ *             hostname?: scalar|null,
+ *             port?: scalar|null, // Default: 12201
+ *             chunk_size?: scalar|null, // Default: 1420
+ *             encoder?: "json"|"compressed_json",
+ *         },
+ *         mongodb?: string|array{
+ *             id?: scalar|null, // ID of a MongoDB\Client service
+ *             uri?: scalar|null,
+ *             username?: scalar|null,
+ *             password?: scalar|null,
+ *             database?: scalar|null, // Default: "monolog"
+ *             collection?: scalar|null, // Default: "logs"
+ *         },
+ *         elasticsearch?: string|array{
+ *             id?: scalar|null,
+ *             hosts?: list<scalar|null>,
+ *             host?: scalar|null,
+ *             port?: scalar|null, // Default: 9200
+ *             transport?: scalar|null, // Default: "Http"
+ *             user?: scalar|null, // Default: null
+ *             password?: scalar|null, // Default: null
+ *         },
+ *         index?: scalar|null, // Default: "monolog"
+ *         document_type?: scalar|null, // Default: "logs"
+ *         ignore_error?: scalar|null, // Default: false
+ *         redis?: string|array{
+ *             id?: scalar|null,
+ *             host?: scalar|null,
+ *             password?: scalar|null, // Default: null
+ *             port?: scalar|null, // Default: 6379
+ *             database?: scalar|null, // Default: 0
+ *             key_name?: scalar|null, // Default: "monolog_redis"
+ *         },
+ *         predis?: string|array{
+ *             id?: scalar|null,
+ *             host?: scalar|null,
+ *         },
+ *         from_email?: scalar|null,
+ *         to_email?: list<scalar|null>,
+ *         subject?: scalar|null,
+ *         content_type?: scalar|null, // Default: null
+ *         headers?: list<scalar|null>,
+ *         mailer?: scalar|null, // Default: null
+ *         email_prototype?: string|array{
+ *             id: scalar|null,
+ *             method?: scalar|null, // Default: null
+ *         },
+ *         verbosity_levels?: array{
+ *             VERBOSITY_QUIET?: scalar|null, // Default: "ERROR"
+ *             VERBOSITY_NORMAL?: scalar|null, // Default: "WARNING"
+ *             VERBOSITY_VERBOSE?: scalar|null, // Default: "NOTICE"
+ *             VERBOSITY_VERY_VERBOSE?: scalar|null, // Default: "INFO"
+ *             VERBOSITY_DEBUG?: scalar|null, // Default: "DEBUG"
+ *         },
+ *         channels?: string|array{
+ *             type?: scalar|null,
+ *             elements?: list<scalar|null>,
+ *         },
+ *     }>,
+ * }
+ * @psalm-type MakerConfig = array{
+ *     root_namespace?: scalar|null, // Default: "App"
+ *     generate_final_classes?: bool, // Default: true
+ *     generate_final_entities?: bool, // Default: false
+ * }
  * @psalm-type WebProfilerConfig = array{
  *     toolbar?: bool|array{ // Profiler toolbar configuration
  *         enabled?: bool, // Default: false
@@ -1262,6 +1405,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     doctrine?: DoctrineConfig,
  *     doctrine_migrations?: DoctrineMigrationsConfig,
  *     security?: SecurityConfig,
+ *     monolog?: MonologConfig,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1274,6 +1418,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         maker?: MakerConfig,
  *         security?: SecurityConfig,
  *         web_profiler?: WebProfilerConfig,
+ *         monolog?: MonologConfig,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1285,6 +1430,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         doctrine?: DoctrineConfig,
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         security?: SecurityConfig,
+ *         monolog?: MonologConfig,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1297,6 +1443,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         doctrine_migrations?: DoctrineMigrationsConfig,
  *         security?: SecurityConfig,
  *         web_profiler?: WebProfilerConfig,
+ *         monolog?: MonologConfig,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

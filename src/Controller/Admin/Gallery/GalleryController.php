@@ -5,7 +5,6 @@ namespace App\Controller\Admin\Gallery;
 use App\Entity\Gallery;
 use App\Entity\Picture;
 use App\Form\GalleryType;
-use App\Message\ProcessPictureMessage;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
 use App\Service\GalleryService;
@@ -13,12 +12,9 @@ use App\Service\PictureService;
 use App\Service\ThumbnailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\Exception\ExceptionInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Throwable;
 
@@ -151,32 +147,32 @@ class GalleryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/pictures', name: 'add_picture', methods: ['POST'])]
-    public function addPicture(
+    #[Route('/{id}/pictures/prepare', name: 'prepare_picture', methods: ['POST'])]
+    public function preparePicture(
         Request $request,
         Gallery $gallery,
-        MessageBusInterface $messageBus,
         PictureService $pictureService,
     ): JsonResponse {
-        /** @var UploadedFile|null $file */
-        $file = $request->files->get('file');
         try {
-            $picture = $pictureService->createFromUpload($file, $gallery);
+            $payload = $request->toArray();
+            $filename = (string) ($payload['filename'] ?? '');
+            $contentType = (string) ($payload['contentType'] ?? '');
+
+            $result = $pictureService->prepareUpload($filename, $contentType, $gallery);
         } catch (Throwable $e) {
             return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
         }
 
-        try {
-            $messageBus->dispatch(new ProcessPictureMessage($picture->getId()));
-        } catch (ExceptionInterface) {
-            return $this->json(['success' => false, 'error' => "Echec de prise en charge de l'image"], 400);
-        }
+        /** @var Picture $picture */
+        $picture = $result['picture'];
 
         return $this->json([
             'success' => true,
-            'id' => $picture->getId(),
-            'status' => Picture::STATUS_PROCESSING,
+            'pictureId' => $picture->getId(),
+            'uploadUrl' => $result['uploadUrl'],
             'originalName' => $picture->getOriginalName(),
+            'status' => Picture::STATUS_PROCESSING,
         ]);
     }
+
 }
