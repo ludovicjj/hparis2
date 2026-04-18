@@ -1,0 +1,100 @@
+{% extends 'admin/admin_layout.html.twig' %}
+
+{% block title %}Catégories - {{ parent() }}{% endblock %}
+
+{% block page_title %}Catégories{% endblock %}
+
+{% block content %}
+    <div class="mb-6 flex justify-between items-center">
+        <p class="text-slate-400">{{ categoryCount }} catégorie(s)</p>
+        <a href="{{ path('app_admin_category_create') }}"
+           class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition flex items-center">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Nouvelle catégorie
+        </a>
+    </div>
+
+    {% if categories is empty %}
+        <div class="bg-slate-900 rounded-xl p-12 border border-slate-700 text-center">
+            <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+            </svg>
+            <p class="text-slate-400 mb-4">Aucune catégorie pour le moment</p>
+            <a href="{{ path('app_admin_category_create') }}"
+               class="inline-flex items-center text-purple-400 hover:text-purple-300 transition">
+                Créer votre première catégorie
+                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+            </a>
+        </div>
+    {% else %}
+        <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700">
+            {% for category in categories %}
+                <div class="p-4 hover:bg-slate-800/50 transition">
+                    {# Desktop : tout sur une ligne #}
+                    <div class="hidden sm:flex items-center gap-4">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-white font-medium truncate">{{ category.name }}</div>
+                            <div class="text-slate-500 text-xs truncate">{{ category.slug }}</div>
+                        </div>
+
+                        <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            {{ category.visibility ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400' }}">
+                            {{ category.visibility ? 'Visible' : 'Masquée' }}
+                        </span>
+
+                        <div class="flex items-center gap-2 shrink-0">
+                            <a href="{{ path('app_admin_category_update', {id: category.id}) }}"
+                               class="p-2 border border-slate-600 rounded-md text-slate-400 hover:text-white hover:border-slate-400 transition" title="Modifier">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+                            <form method="post" action="{{ path('app_admin_category_delete', {id: category.id}) }}" class="inline"
+                                  onsubmit="return confirm('Supprimer la catégorie « {{ category.name|e('js') }} » ?')">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                                <button type="submit" class="p-2 border border-red-900/50 rounded-md text-red-400 hover:text-red-300 hover:border-red-700 transition" title="Supprimer">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    {# Mobile : nom en haut, slug + actions en dessous #}
+                    <div class="sm:hidden">
+                        <div class="text-white font-medium truncate mb-1">{{ category.name }}</div>
+                        <div class="text-slate-500 text-xs truncate mb-3">{{ category.slug }}</div>
+                        <div class="flex items-center justify-between">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {{ category.visibility ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400' }}">
+                                {{ category.visibility ? 'Visible' : 'Masquée' }}
+                            </span>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ path('app_admin_category_update', {id: category.id}) }}"
+                                   class="p-2 border border-slate-600 rounded-md text-slate-400 hover:text-white hover:border-slate-400 transition" title="Modifier">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                                <form method="post" action="{{ path('app_admin_category_delete', {id: category.id}) }}" class="inline"
+                                      onsubmit="return confirm('Supprimer la catégorie « {{ category.name|e('js') }} » ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ category.id) }}">
+                                    <button type="submit" class="p-2 border border-red-900/50 rounded-md text-red-400 hover:text-red-300 hover:border-red-700 transition" title="Supprimer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

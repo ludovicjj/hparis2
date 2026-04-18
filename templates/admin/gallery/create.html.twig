@@ -4,6 +4,11 @@
 
 {% block page_title %}Nouvelle galerie{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('admin_gallery') }}
+{% endblock %}
+
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('admin_gallery') }}
@@ -26,6 +31,13 @@
                         {{ form_label(form.description, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
                         {{ form_widget(form.description, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition resize-none h-[166px]'}}) }}
                         {{ form_errors(form.description) }}
+                    </div>
+
+                    {# Categories #}
+                    <div>
+                        {{ form_label(form.categories, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
+                        {{ form_widget(form.categories, {'attr': {'class': 'js-category-search'}}) }}
+                        {{ form_errors(form.categories) }}
                     </div>
 
                     {# Visibility Switch #}
