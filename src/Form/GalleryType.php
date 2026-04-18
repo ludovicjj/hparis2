@@ -2,6 +2,7 @@
 
 namespace App\Form;
 
+use App\Entity\Category;
 use App\Entity\Gallery;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
@@ -10,10 +11,16 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Validator\Constraints\Image;
 
 class GalleryType extends AbstractType
 {
+    public function __construct(
+        private readonly UrlGeneratorInterface $urlGenerator,
+    ) {
+
+    }
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -30,6 +37,10 @@ class GalleryType extends AbstractType
                     'placeholder' => 'Description (optionnel)',
                     'rows' => 4,
                 ],
+            ])
+            ->add('categories', SearchCategoryType::class, [
+                'search' => $this->urlGenerator->generate('api_category_search'),
+                'label' => 'Catégories',
             ])
             ->add('thumbnailFile', FileType::class, [
                 'label' => 'Image de couverture',

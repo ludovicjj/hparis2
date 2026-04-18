@@ -48,9 +48,17 @@ class Gallery
     #[ORM\Column(nullable: true)]
     private ?string $token = null;
 
+    /** @var Collection<int, Category> */
+    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'galleries')]
+    #[ORM\JoinTable(name: 'gallery_category')]
+    #[ORM\JoinColumn(name: 'gallery_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'category_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    private Collection $categories;
+
     public function __construct()
     {
         $this->pictures = new ArrayCollection();
+        $this->categories = new ArrayCollection();
         $this->visibility = true;
     }
 
@@ -199,5 +207,30 @@ class Gallery
     public function resetToken(): void
     {
         $this->token = $this->generateToken();
+    }
+
+    /** @return Collection<int, Category> */
+    public function getCategories(): Collection
+    {
+        return $this->categories;
+    }
+
+    public function addCategory(Category $category): static
+    {
+        if (!$this->categories->contains($category)) {
+            $this->categories->add($category);
+            $category->addGallery($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCategory(Category $category): static
+    {
+        if ($this->categories->removeElement($category)) {
+            $category->removeGallery($this);
+        }
+
+        return $this;
     }
 }
