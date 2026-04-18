@@ -24,6 +24,9 @@ security:
                 check_path: app_login
                 enable_csrf: true
                 default_target_path: app_admin_dashboard
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
             logout:
                 path: app_logout
                 target: app_front_home
