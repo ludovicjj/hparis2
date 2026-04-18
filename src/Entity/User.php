@@ -4,12 +4,15 @@ namespace App\Entity;
 
 use App\Repository\UserRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfiguration;
+use Scheb\TwoFactorBundle\Model\Totp\TotpConfigurationInterface;
+use Scheb\TwoFactorBundle\Model\Totp\TwoFactorInterface;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User implements UserInterface, PasswordAuthenticatedUserInterface, TwoFactorInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -36,6 +39,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $totpSecret = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $totpDraftSecret = null;
+
+    #[ORM\Column(options: ['default' => true])]
+    private bool $totpEnabled = true;
 
     public function getId(): ?int
     {
@@ -123,6 +135,66 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->password = $password;
 
         return $this;
+    }
+
+    public function getTotpSecret(): ?string
+    {
+        return $this->totpSecret;
+    }
+
+    public function setTotpSecret(?string $totpSecret): static
+    {
+        $this->totpSecret = $totpSecret;
+
+        return $this;
+    }
+
+    public function getTotpDraftSecret(): ?string
+    {
+        return $this->totpDraftSecret;
+    }
+
+    public function setTotpDraftSecret(?string $totpDraftSecret): static
+    {
+        $this->totpDraftSecret = $totpDraftSecret;
+
+        return $this;
+    }
+
+    public function isTotpEnabled(): bool
+    {
+        return $this->totpEnabled;
+    }
+
+    public function setTotpEnabled(bool $totpEnabled): static
+    {
+        $this->totpEnabled = $totpEnabled;
+
+        return $this;
+    }
+
+    public function isTotpAuthenticationEnabled(): bool
+    {
+        return $this->totpEnabled && $this->totpSecret !== null;
+    }
+
+    public function getTotpAuthenticationUsername(): string
+    {
+        return (string) $this->email;
+    }
+
+    public function getTotpAuthenticationConfiguration(): ?TotpConfigurationInterface
+    {
+        if ($this->totpSecret === null) {
+            return null;
+        }
+
+        return new TotpConfiguration(
+            $this->totpSecret,
+            TotpConfiguration::ALGORITHM_SHA1,
+            30,
+            6
+        );
     }
 
     /**

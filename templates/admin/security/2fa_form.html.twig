@@ -1,0 +1,55 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Double Vérification (2FA) - {{ parent() }}{% endblock %}
+
+{% block body %}
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div class="w-full max-w-md px-4 sm:px-6">
+            <div class="bg-white/10 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-white/10">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Authentification</h1>
+                    <p class="text-gray-400">Entrez le code généré par votre application d'authentification</p>
+                </div>
+
+                {% if authenticationError %}
+                    <div class="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg mb-6">
+                        {{ authenticationError|trans(authenticationErrorData, 'SchebTwoFactorBundle') }}
+                    </div>
+                {% endif %}
+
+                <form method="post" action="{{ path('2fa_login_check') }}" class="space-y-6">
+                    <div>
+                        <label for="_auth_code" class="block text-sm font-medium text-gray-300 mb-2">Code de vérification</label>
+                        <input type="text"
+                               name="_auth_code"
+                               id="_auth_code"
+                               inputmode="numeric"
+                               pattern="[0-9]{6}"
+                               maxlength="6"
+                               autocomplete="one-time-code"
+                               class="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition tracking-widest text-center text-xl"
+                               required
+                               autofocus
+                               placeholder="123456">
+                    </div>
+                    
+                    {% if isCsrfProtectionEnabled %}
+                        <input type="hidden" name="{{ csrfParameterName }}" value="{{ csrf_token(csrfTokenId) }}">
+                    {% endif %}
+
+                    <button type="submit"
+                            class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 px-4 rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all">
+                        Vérifier
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <a href="{{ path('app_logout') }}" class="text-gray-400 hover:text-white text-sm transition">
+                        &larr; Se déconnecter
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+{% endblock %}
