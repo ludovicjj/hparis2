@@ -27,6 +27,18 @@ class CategoryRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return Category[]
+     */
+    public function findVisibleOrderedByName(): array
+    {
+        return $this->createQueryBuilder('c')
+            ->where('c.visibility = true')
+            ->orderBy('c.name', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function countAll(): int
     {
         return (int) $this->createQueryBuilder('c')

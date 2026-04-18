@@ -3,6 +3,7 @@
 namespace App\Controller\Front;
 
 use App\Entity\Gallery;
+use App\Repository\CategoryRepository;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
 use App\Service\GalleryService;
@@ -17,14 +18,60 @@ use Symfony\Component\Routing\Attribute\Route;
 class GalleryController extends AbstractController
 {
     private const int PICTURES_PER_PAGE = 15;
+    private const int GALLERIES_PER_PAGE = 6;
 
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(GalleryRepository $galleryRepository): Response
-    {
-        $galleries = $galleryRepository->findVisibleWithThumbnails();
+    public function index(
+        Request $request,
+        GalleryRepository $galleryRepository,
+        CategoryRepository $categoryRepository,
+    ): Response {
+        $slug = $request->query->get('category');
+        $activeCategory = $slug ? $categoryRepository->findOneBy(['slug' => $slug, 'visibility' => true]) : null;
+
+        $galleries = $galleryRepository->findVisibleWithThumbnailsPaginated($activeCategory, 0, self::GALLERIES_PER_PAGE);
+        $total = $galleryRepository->countVisible($activeCategory);
 
         return $this->render('front/gallery/index.html.twig', [
             'galleries' => $galleries,
+            'categories' => $categoryRepository->findVisibleOrderedByName(),
+            'activeCategory' => $activeCategory,
+            'hasMore' => count($galleries) < $total,
+            'nextOffset' => count($galleries),
+        ]);
+    }
+
+    #[Route('/api/list', name: 'list', methods: ['GET'])]
+    public function list(
+        Request $request,
+        GalleryRepository $galleryRepository,
+        CategoryRepository $categoryRepository,
+        S3Service $s3Service,
+    ): JsonResponse {
+        $offset = max(0, $request->query->getInt('offset'));
+        $slug = $request->query->get('category');
+
+        $activeCategory = $slug ? $categoryRepository->findOneBy(['slug' => $slug, 'visibility' => true]) : null;
+
+        $galleries = $galleryRepository->findVisibleWithThumbnailsPaginated(
+            category: $activeCategory,
+            offset: $offset,
+            limit: self::GALLERIES_PER_PAGE
+        );
+
+        $total = $galleryRepository->countVisible($activeCategory);
+
+        $payload = array_map(fn(Gallery $gallery) => [
+            'id' => $gallery->getId(),
+            'title' => $gallery->getTitle(),
+            'url' => $this->generateUrl('app_front_gallery_show', ['id' => $gallery->getId()]),
+            'thumbnailUrl' => $gallery->getThumbnail() ? $s3Service->getPublicUrl($gallery->getThumbnail()->getFilename()) : null,
+        ], $galleries);
+
+        return $this->json([
+            'galleries' => $payload,
+            'hasMore' => ($offset + self::GALLERIES_PER_PAGE) < $total,
+            'nextOffset' => $offset + self::GALLERIES_PER_PAGE,
         ]);
     }
 
