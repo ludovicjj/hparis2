@@ -2,9 +2,19 @@
 
 {% block title %}Galleries - {{ parent() }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('front_gallery_index') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('front_gallery_index') }}
+{% endblock %}
+
 {% block body %}
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div class="text-center mb-12">
+        <div class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4">
                 Nos
                 <span class="text-gray-600">
@@ -16,41 +26,125 @@
             </p>
         </div>
 
+        {# Category chips carousel — Unsplash-style #}
+        {% if categories is not empty %}
+            <div id="category-carousel" class="relative overflow-hidden mb-10" data-carousel>
+                <div data-carousel-track
+                     class="flex gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1 px-0 md:px-12 border border-transparent">
+                    <a href="{{ path('app_front_gallery_index') }}"
+                       {% if activeCategory is null %}data-active="true"{% endif %}
+                       class="shrink-0 w-[145px] truncate px-4 py-3 rounded-lg text-sm font-medium text-center border transition
+                           {{ activeCategory is null
+                               ? 'bg-gray-900 border-gray-900 text-white'
+                               : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:text-gray-900' }}">
+                        Toutes
+                    </a>
+                    {% for category in categories %}
+                        {% set isActive = activeCategory and activeCategory.id == category.id %}
+                        <a href="{{ path('app_front_gallery_index', {category: category.slug}) }}"
+                           {% if isActive %}data-active="true"{% endif %}
+                           title="{{ category.name }}"
+                           class="shrink-0 w-[145px] truncate px-4 py-3 rounded-lg text-sm font-medium text-center border transition
+                               {{ isActive
+                                   ? 'bg-gray-900 border-gray-900 text-white'
+                                   : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:text-gray-900' }}">
+                            {{ category.name }}
+                        </a>
+                    {% endfor %}
+                </div>
+
+                {# Left overlay: fade + chevron #}
+                <div class="hidden md:flex absolute left-0 top-0 bottom-0 items-center pointer-events-none">
+                    <div class="h-full w-12 flex items-center justify-start bg-gradient-to-r from-gray-50 via-gray-50 to-transparent pointer-events-auto">
+                        <button type="button"
+                                data-carousel-prev
+                                aria-label="Précédent"
+                                class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                {# Right overlay: fade + chevron #}
+                <div class="hidden md:flex absolute right-0 top-0 bottom-0 items-center pointer-events-none">
+                    <div class="h-full w-12 flex items-center justify-end bg-gradient-to-l from-gray-50 via-gray-50 to-transparent pointer-events-auto">
+                        <button type="button"
+                                data-carousel-next
+                                aria-label="Suivant"
+                                class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
         {% if galleries is empty %}
             <div class="text-center py-20">
                 <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                <p class="text-gray-500">Aucune galerie disponible pour le moment</p>
+                <p class="text-gray-500">
+                    {% if activeCategory %}
+                        Aucune galerie dans la catégorie « {{ activeCategory.name }} »
+                    {% else %}
+                        Aucune galerie disponible pour le moment
+                    {% endif %}
+                </p>
             </div>
         {% else %}
-            <div class="columns-1 sm:columns-2 lg:columns-3 gap-4">
+            <div id="gallery-grid"
+                 class="-mx-2"
+                 data-gallery-masonry
+                 data-api-url="{{ path('app_front_gallery_list') }}"
+                 data-category="{{ activeCategory ? activeCategory.slug : '' }}"
+                 data-next-offset="{{ nextOffset }}"
+                 data-has-more="{{ hasMore ? 'true' : 'false' }}">
+                <div class="masonry-sizer w-full sm:w-1/2 lg:w-1/3"></div>
                 {% for gallery in galleries %}
-                    <a href="{{ path('app_front_gallery_show', {id: gallery.id}) }}" class="group block break-inside-avoid mb-4">
-                        <div class="overflow-hidden relative bg-gray-100">
-                            {% if gallery.thumbnail %}
-                                <img
-                                    src="{{ s3_url(gallery.thumbnail.filename) }}"
-                                    alt="{{ gallery.title }}"
-                                    loading="lazy"
-                                    class="w-full h-auto transition-transform duration-300 group-hover:scale-110"
-                                >
-                            {% else %}
-                                <div class="aspect-square flex items-center justify-center">
-                                    <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                            {% endif %}
+                    <div class="masonry-item w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
+                        <a href="{{ path('app_front_gallery_show', {id: gallery.id}) }}" class="group block">
+                            <div class="overflow-hidden relative bg-gray-100">
+                                {% if gallery.thumbnail %}
+                                    <img
+                                        src="{{ s3_url(gallery.thumbnail.filename) }}"
+                                        alt="{{ gallery.title }}"
+                                        loading="lazy"
+                                        class="w-full h-auto transition-transform duration-300 group-hover:scale-110"
+                                    >
+                                {% else %}
+                                    <div class="aspect-square flex items-center justify-center">
+                                        <svg class="w-16 h-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                {% endif %}
 
-                            <!-- Overlay avec titre au survol -->
-                            <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                                <h3 class="text-white text-xl font-semibold text-center px-4">{{ gallery.title }}</h3>
+                                <!-- Overlay avec titre au survol -->
+                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
+                                    <h3 class="text-white text-xl font-semibold text-center px-4">{{ gallery.title }}</h3>
+                                </div>
                             </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 {% endfor %}
             </div>
+
+            {% if hasMore %}
+                <div id="gallery-sentinel" class="flex justify-center py-8">
+                    <div class="flex items-center space-x-2 text-gray-500">
+                        <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span>Chargement...</span>
+                    </div>
+                </div>
+            {% endif %}
         {% endif %}
     </div>
 {% endblock %}

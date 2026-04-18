@@ -2,6 +2,7 @@ import { initThumbnailPreview } from '../components/thumbnailManager';
 import { PicturesManager } from '../components/PicturesManager';
 import { CopyText } from '../components/CopyText';
 import { ResetToken } from '../components/ResetToken';
+import { initCategorySearch } from '../components/CategorySearch';
 
 // Init Copy URL button
 new CopyText('#copy-url-btn', '#gallery-url', '#copy-url-text');
@@ -16,3 +17,6 @@ initThumbnailPreview('#gallery_thumbnailFile', '#thumbnail-dropzone');
 if (document.querySelector('#pictures-dropzone')) {
     new PicturesManager('#pictures-dropzone', '#pictures-input');
 }
+
+// Init Categories TomSelect
+initCategorySearch('.js-category-search');
