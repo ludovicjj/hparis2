@@ -3,8 +3,12 @@
 namespace App\Controller\Admin\Setting;
 
 use App\Entity\SocialLink;
+use App\Enum\MediaSetting;
+use App\Form\HeroType;
+use App\Form\LogoType;
 use App\Form\SocialLinkType;
 use App\Repository\SocialLinkRepository;
+use App\Service\MediaSettingService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -18,11 +22,101 @@ use Throwable;
 class SettingsController extends AbstractController
 {
     #[Route('', name: '', methods: ['GET'])]
-    public function index(SocialLinkRepository $repository): Response
+    public function index(SocialLinkRepository $repository, MediaSettingService $mediaSettingService): Response
     {
+        $logoForm = $this->createForm(LogoType::class, null, [
+            'action' => $this->generateUrl('app_admin_settings_logo_update'),
+        ]);
+
+        $heroForm = $this->createForm(HeroType::class, null, [
+            'action' => $this->generateUrl('app_admin_settings_hero_update'),
+        ]);
+
         return $this->render('admin/settings/index.html.twig', [
             'socialLinks' => $repository->findAllOrdered(),
+            'logoForm' => $logoForm,
+            'logoUrl' => $mediaSettingService->getPublicUrl(MediaSetting::LOGO),
+            'heroForm' => $heroForm,
+            'heroUrl' => $mediaSettingService->getPublicUrl(MediaSetting::HERO),
         ]);
+    }
+
+    #[Route('/logo', name: '_logo_update', methods: ['POST'])]
+    public function updateLogo(Request $request, MediaSettingService $mediaSettingService): Response
+    {
+        $form = $this->createForm(LogoType::class)->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $mediaSettingService->handle($form, MediaSetting::LOGO);
+                $this->addFlash('success', 'Logo mis à jour.');
+            } catch (Throwable $e) {
+                $this->addFlash('error', 'Erreur lors de la mise à jour du logo : ' . $e->getMessage());
+            }
+        } else {
+            foreach ($form->getErrors(true) as $error) {
+                $this->addFlash('error', $error->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_settings');
+    }
+
+    #[Route('/hero', name: '_hero_update', methods: ['POST'])]
+    public function updateHero(Request $request, MediaSettingService $mediaSettingService): Response
+    {
+        $form = $this->createForm(HeroType::class)->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $mediaSettingService->handle($form, MediaSetting::HERO);
+                $this->addFlash('success', 'Hero mis à jour.');
+            } catch (Throwable $e) {
+                $this->addFlash('error', 'Erreur lors de la mise à jour du hero : ' . $e->getMessage());
+            }
+        } else {
+            foreach ($form->getErrors(true) as $error) {
+                $this->addFlash('error', $error->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_settings');
+    }
+
+    #[Route('/logo/delete', name: '_logo_delete', methods: ['POST'])]
+    public function deleteLogo(Request $request, MediaSettingService $mediaSettingService): Response
+    {
+        if (!$this->isCsrfTokenValid('delete_logo', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_admin_settings');
+        }
+
+        try {
+            $mediaSettingService->delete(MediaSetting::LOGO);
+            $this->addFlash('success', 'Logo supprimé.');
+        } catch (Throwable $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression du logo : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_admin_settings');
+    }
+
+    #[Route('/hero/delete', name: '_hero_delete', methods: ['POST'])]
+    public function deleteHero(Request $request, MediaSettingService $mediaSettingService): Response
+    {
+        if (!$this->isCsrfTokenValid('delete_hero', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_admin_settings');
+        }
+
+        try {
+            $mediaSettingService->delete(MediaSetting::HERO);
+            $this->addFlash('success', 'Hero supprimé.');
+        } catch (Throwable $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression du hero : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_admin_settings');
     }
 
     #[Route('/social-link/create', name: '_social_link_create', methods: ['GET', 'POST'])]
