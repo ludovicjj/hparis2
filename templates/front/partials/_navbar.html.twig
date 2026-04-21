@@ -1,8 +1,15 @@
 <nav class="bg-white border-b border-gray-200" data-navbar>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="grid grid-cols-[1fr_auto_1fr] items-center h-16">
-            <div class="col-start-1 justify-self-start text-2xl font-bold text-gray-900">
-                <a href="{{ path('app_front_home') }}">Hollywood Paris</a>
+            {% set logoUrl = logo_url() %}
+            <div class="col-start-1 justify-self-start">
+                <a href="{{ path('app_front_home') }}" class="flex items-center">
+                    {% if logoUrl %}
+                        <img src="{{ logoUrl }}" alt="Hollywood Paris" class="h-10 w-auto">
+                    {% else %}
+                        <span class="font-['Bodoni_Moda',serif] font-normal uppercase text-base md:text-2xl text-gray-900">Hollywood Paris</span>
+                    {% endif %}
+                </a>
             </div>
 
             <div class="hidden md:flex md:col-start-2 space-x-8">

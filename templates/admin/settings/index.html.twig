@@ -10,6 +10,119 @@
 {% endblock %}
 
 {% block content %}
+    <div class="mb-10 flex flex-col lg:flex-row gap-6">
+        <div class="lg:w-[300px] lg:shrink-0 flex flex-col">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold text-white">Logo du site</h2>
+                <p class="text-slate-400 text-sm">Logo affiché dans la navigation du site public</p>
+            </div>
+
+            <div class="bg-slate-900 rounded-xl border border-slate-700 p-6 flex-1">
+                {{ form_start(logoForm, {attr: {id: 'logo-form', class: 'h-full flex flex-col'}}) }}
+                    <p class="text-slate-300 text-sm font-semibold mb-3">JPG, PNG · 1 Mo max · 600×600 px max</p>
+
+                    <div class="relative inline-block bg-white rounded-lg border-2 border-slate-700 hover:border-purple-500 transition cursor-pointer">
+                        <div id="logo-preview-zone" class="w-62 h-60 overflow-hidden flex items-center justify-center">
+                            <img id="logo-preview-img"
+                                 src="{{ logoUrl ?: '' }}"
+                                 alt="Aperçu du logo"
+                                 class="max-h-full max-w-full object-contain {{ logoUrl ? '' : 'hidden' }}">
+                            <div id="logo-preview-placeholder"
+                                 class="flex flex-col items-center gap-1 text-slate-400 {{ logoUrl ? 'hidden' : '' }}">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="text-xs">Aucun logo</span>
+                            </div>
+                        </div>
+
+                        {% if logoUrl %}
+                            <button type="button"
+                                    class="absolute bottom-2 right-2 bg-white hover:bg-red-50 border border-red-600 text-red-600 p-1.5 rounded-md transition cursor-pointer shadow-lg"
+                                    data-media-delete
+                                    data-url="{{ path('app_admin_settings_logo_delete') }}"
+                                    data-token="{{ csrf_token('delete_logo') }}"
+                                    data-confirm="Supprimer le logo ?"
+                                    title="Supprimer le logo">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    <p id="logo-file-name" class="text-slate-400 text-xs mt-3 truncate">Aucun fichier sélectionné</p>
+
+                    {{ form_widget(logoForm.file, {attr: {class: 'hidden'}}) }}
+                    {{ form_errors(logoForm.file, {attr: {class: 'text-red-400 text-xs mt-1'}}) }}
+
+                    <div class="mt-auto pt-4 flex justify-center sm:justify-start">
+                        <button type="submit"
+                                class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all text-sm">
+                            {{ logoUrl ? 'Modifier le logo' : 'Enregister le logo' }}
+                        </button>
+                    </div>
+                {{ form_end(logoForm) }}
+            </div>
+        </div>
+
+        <div class="flex-1 min-w-0 flex flex-col">
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold text-white">Hero du site</h2>
+                <p class="text-slate-400 text-sm">Image principale affichée en haut du site public</p>
+            </div>
+
+            <div class="bg-slate-900 rounded-xl border border-slate-700 p-6 flex-1">
+                {{ form_start(heroForm, {attr: {id: 'hero-form', class: 'h-full flex flex-col'}}) }}
+                    <p class="text-slate-300 text-sm font-semibold mb-3">JPG, PNG · 3 Mo max · 2400×1600 px max</p>
+
+                    <div class="relative">
+                        <div id="hero-preview-zone"
+                             class="w-full aspect-[2/1] bg-white rounded-lg overflow-hidden flex items-center justify-center transition cursor-pointer border-2 border-slate-700 hover:border-purple-500">
+                            <img id="hero-preview-img"
+                                 src="{{ heroUrl ?: '' }}"
+                                 alt="Aperçu du hero"
+                                 class="w-full h-full object-cover {{ heroUrl ? '' : 'hidden' }}">
+                            <div id="hero-preview-placeholder"
+                                 class="flex flex-col items-center gap-1 text-slate-400 {{ heroUrl ? 'hidden' : '' }}">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                                <span class="text-xs">Aucun hero</span>
+                            </div>
+                        </div>
+
+                        {% if heroUrl %}
+                            <button type="button"
+                                    class="absolute bottom-2 right-2 bg-white hover:bg-red-50 border border-red-600 text-red-600 p-1.5 rounded-md transition cursor-pointer shadow-lg"
+                                    data-media-delete
+                                    data-url="{{ path('app_admin_settings_hero_delete') }}"
+                                    data-token="{{ csrf_token('delete_hero') }}"
+                                    data-confirm="Supprimer le hero ?"
+                                    title="Supprimer le hero">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        {% endif %}
+                    </div>
+
+                    <p id="hero-file-name" class="text-slate-400 text-xs mt-3 truncate">Aucun fichier sélectionné</p>
+
+                    {{ form_widget(heroForm.file, {attr: {class: 'hidden'}}) }}
+                    {{ form_errors(heroForm.file, {attr: {class: 'text-red-400 text-xs mt-1'}}) }}
+
+                    <div class="mt-auto pt-4 flex justify-center sm:justify-start">
+                        <button type="submit"
+                                class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg shadow-lg hover:shadow-purple-500/25 transition-all text-sm">
+                            {{ heroUrl ? 'Modifier le hero' : 'Enregister le hero' }}
+                        </button>
+                    </div>
+                {{ form_end(heroForm) }}
+            </div>
+        </div>
+    </div>
+
     <div class="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
             <h2 class="text-lg font-semibold text-white">Réseaux sociaux</h2>
