@@ -70,7 +70,10 @@ function initMediaPreview(prefix) {
 
 function initMediaDelete() {
     document.querySelectorAll('[data-media-delete]').forEach(btn => {
-        btn.addEventListener('click', async () => {
+        btn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
             const message = btn.dataset.confirm || 'Confirmer la suppression ?';
             if (!confirm(message)) {
                 return;
@@ -101,5 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initSocialLinksSortable();
     initMediaPreview('logo');
     initMediaPreview('hero');
+    initMediaPreview('favicon');
     initMediaDelete();
 });

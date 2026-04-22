@@ -4,6 +4,7 @@ namespace App\Controller\Admin\Setting;
 
 use App\Entity\SocialLink;
 use App\Enum\MediaSetting;
+use App\Form\FaviconType;
 use App\Form\HeroType;
 use App\Form\LogoType;
 use App\Form\SocialLinkType;
@@ -32,12 +33,18 @@ class SettingsController extends AbstractController
             'action' => $this->generateUrl('app_admin_settings_hero_update'),
         ]);
 
+        $faviconForm = $this->createForm(FaviconType::class, null, [
+            'action' => $this->generateUrl('app_admin_settings_favicon_update'),
+        ]);
+
         return $this->render('admin/settings/index.html.twig', [
             'socialLinks' => $repository->findAllOrdered(),
             'logoForm' => $logoForm,
             'logoUrl' => $mediaSettingService->getPublicUrl(MediaSetting::LOGO),
             'heroForm' => $heroForm,
             'heroUrl' => $mediaSettingService->getPublicUrl(MediaSetting::HERO),
+            'faviconForm' => $faviconForm,
+            'faviconUrl' => $mediaSettingService->getPublicUrl(MediaSetting::FAVICON),
         ]);
     }
 
@@ -114,6 +121,45 @@ class SettingsController extends AbstractController
             $this->addFlash('success', 'Hero supprimé.');
         } catch (Throwable $e) {
             $this->addFlash('error', 'Erreur lors de la suppression du hero : ' . $e->getMessage());
+        }
+
+        return $this->redirectToRoute('app_admin_settings');
+    }
+
+    #[Route('/favicon', name: '_favicon_update', methods: ['POST'])]
+    public function updateFavicon(Request $request, MediaSettingService $mediaSettingService): Response
+    {
+        $form = $this->createForm(FaviconType::class)->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $mediaSettingService->handle($form, MediaSetting::FAVICON);
+                $this->addFlash('success', 'Favicon mis à jour.');
+            } catch (Throwable $e) {
+                $this->addFlash('error', 'Erreur lors de la mise à jour du favicon : ' . $e->getMessage());
+            }
+        } else {
+            foreach ($form->getErrors(true) as $error) {
+                $this->addFlash('error', $error->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_settings');
+    }
+
+    #[Route('/favicon/delete', name: '_favicon_delete', methods: ['POST'])]
+    public function deleteFavicon(Request $request, MediaSettingService $mediaSettingService): Response
+    {
+        if (!$this->isCsrfTokenValid('delete_favicon', $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_admin_settings');
+        }
+
+        try {
+            $mediaSettingService->delete(MediaSetting::FAVICON);
+            $this->addFlash('success', 'Favicon supprimé.');
+        } catch (Throwable $e) {
+            $this->addFlash('error', 'Erreur lors de la suppression du favicon : ' . $e->getMessage());
         }
 
         return $this->redirectToRoute('app_admin_settings');
