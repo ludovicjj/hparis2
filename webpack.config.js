@@ -23,6 +23,7 @@ Encore
     .addEntry('app_common', './assets/js/app.js')
     .addEntry('admin_gallery', './assets/js/admin/gallery.js')
     .addEntry('admin_settings', './assets/js/admin/settings.js')
+    .addEntry('admin_category', './assets/js/admin/category.js')
     .addEntry('front_app', './assets/js/front/app.js')
     .addEntry('front_gallery_index', './assets/js/front/gallery-index.js')
     .addEntry('front_gallery_show', './assets/js/front/gallery-show.js')

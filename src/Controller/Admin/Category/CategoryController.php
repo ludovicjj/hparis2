@@ -6,11 +6,14 @@ use App\Entity\Category;
 use App\Form\CategoryType;
 use App\Repository\CategoryRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\String\Slugger\SluggerInterface;
+use Throwable;
 
 #[Route('/admin/category', name: 'app_admin_category_')]
 class CategoryController extends AbstractController
@@ -19,7 +22,7 @@ class CategoryController extends AbstractController
     public function index(CategoryRepository $categoryRepository): Response
     {
         return $this->render('admin/category/index.html.twig', [
-            'categories' => $categoryRepository->findAllOrderedByName(),
+            'categories' => $categoryRepository->findAllOrdered(),
             'categoryCount' => $categoryRepository->countAll(),
         ]);
     }
@@ -29,6 +32,7 @@ class CategoryController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger,
+        CategoryRepository $categoryRepository,
     ): Response {
         $category = new Category();
         $form = $this->createForm(CategoryType::class, $category);
@@ -36,6 +40,7 @@ class CategoryController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $category->setSlug($slugger->slug((string) $category->getName())->lower()->toString());
+            $category->setPosition($categoryRepository->getNextPosition());
 
             $entityManager->persist($category);
             $entityManager->flush();
@@ -91,5 +96,41 @@ class CategoryController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_category_index');
+    }
+
+    #[Route('/reorder', name: 'reorder', methods: ['POST'])]
+    public function reorder(
+        Request $request,
+        CategoryRepository $categoryRepository,
+        EntityManagerInterface $entityManager,
+    ): JsonResponse {
+        try {
+            $ids = $request->toArray()['ids'] ?? [];
+
+            if (!is_array($ids)) {
+                throw new InvalidArgumentException('Invalid input data, expected array.');
+            }
+
+            $categories = $categoryRepository->findBy(['id' => $ids]);
+            $indexed = [];
+            foreach ($categories as $category) {
+                $indexed[$category->getId()] = $category;
+            }
+
+            foreach ($ids as $position => $id) {
+                if (isset($indexed[$id])) {
+                    $indexed[$id]->setPosition($position);
+                }
+            }
+
+            $entityManager->flush();
+
+            return $this->json(['success' => true]);
+        } catch (Throwable $exception) {
+            return $this->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
     }
 }
