@@ -4,6 +4,11 @@
 
 {% block page_title %}Catégories{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_category') }}
+{% endblock %}
+
 {% block content %}
     <div class="mb-6 flex justify-between items-center">
         <p class="text-slate-400">{{ categoryCount }} catégorie(s)</p>
@@ -31,11 +36,18 @@
             </a>
         </div>
     {% else %}
-        <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700">
+        <div id="categories-sortable"
+             data-reorder-url="{{ path('app_admin_category_reorder') }}"
+             class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700">
             {% for category in categories %}
-                <div class="p-4 hover:bg-slate-800/50 transition">
+                <div data-id="{{ category.id }}" class="p-4 hover:bg-slate-800/50 transition">
                     {# Desktop : tout sur une ligne #}
                     <div class="hidden sm:flex items-center gap-4">
+                        <span class="drag-handle cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 shrink-0">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                            </svg>
+                        </span>
                         <div class="min-w-0 flex-1">
                             <div class="text-white font-medium truncate">{{ category.name }}</div>
                             <div class="text-slate-500 text-xs truncate">{{ category.slug }}</div>
@@ -67,8 +79,17 @@
 
                     {# Mobile : nom en haut, slug + actions en dessous #}
                     <div class="sm:hidden">
-                        <div class="text-white font-medium truncate mb-1">{{ category.name }}</div>
-                        <div class="text-slate-500 text-xs truncate mb-3">{{ category.slug }}</div>
+                        <div class="flex items-start gap-3 mb-3">
+                            <span class="drag-handle cursor-grab active:cursor-grabbing text-slate-500 hover:text-slate-300 shrink-0 mt-0.5">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                                </svg>
+                            </span>
+                            <div class="min-w-0 flex-1">
+                                <div class="text-white font-medium truncate mb-1">{{ category.name }}</div>
+                                <div class="text-slate-500 text-xs truncate">{{ category.slug }}</div>
+                            </div>
+                        </div>
                         <div class="flex items-center justify-between">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                 {{ category.visibility ? 'bg-green-500/20 text-green-400' : 'bg-slate-500/20 text-slate-400' }}">

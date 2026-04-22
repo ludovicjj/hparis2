@@ -19,10 +19,10 @@ class CategoryRepository extends ServiceEntityRepository
     /**
      * @return Category[]
      */
-    public function findAllOrderedByName(): array
+    public function findAllOrdered(): array
     {
         return $this->createQueryBuilder('c')
-            ->orderBy('c.name', 'ASC')
+            ->orderBy('c.position', 'ASC')
             ->getQuery()
             ->getResult();
     }
@@ -30,13 +30,23 @@ class CategoryRepository extends ServiceEntityRepository
     /**
      * @return Category[]
      */
-    public function findVisibleOrderedByName(): array
+    public function findVisibleOrdered(): array
     {
         return $this->createQueryBuilder('c')
             ->where('c.visibility = true')
-            ->orderBy('c.name', 'ASC')
+            ->orderBy('c.position', 'ASC')
             ->getQuery()
             ->getResult();
+    }
+
+    public function getNextPosition(): int
+    {
+        $lastPosition = $this->createQueryBuilder('c')
+            ->select('MAX(c.position)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return ($lastPosition ?? -1) + 1;
     }
 
     public function countAll(): int

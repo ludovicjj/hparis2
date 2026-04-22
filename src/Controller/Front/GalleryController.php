@@ -34,7 +34,7 @@ class GalleryController extends AbstractController
 
         return $this->render('front/gallery/index.html.twig', [
             'galleries' => $galleries,
-            'categories' => $categoryRepository->findVisibleOrderedByName(),
+            'categories' => $categoryRepository->findVisibleOrdered(),
             'activeCategory' => $activeCategory,
             'hasMore' => count($galleries) < $total,
             'nextOffset' => count($galleries),

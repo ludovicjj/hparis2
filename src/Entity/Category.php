@@ -29,6 +29,9 @@ class Category
     #[ORM\Column(length: 120, unique: true)]
     private ?string $slug = null;
 
+    #[ORM\Column(options: ['default' => 0])]
+    private int $position = 0;
+
     #[ORM\Column(options: ['default' => true])]
     private bool $visibility;
 
@@ -86,6 +89,18 @@ class Category
     public function setSlug(string $slug): static
     {
         $this->slug = $slug;
+
+        return $this;
+    }
+
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    public function setPosition(int $position): static
+    {
+        $this->position = $position;
 
         return $this;
     }

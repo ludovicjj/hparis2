@@ -19,6 +19,7 @@ class SettingExtension extends AbstractExtension
         return [
             new TwigFunction('logo_url', fn (): ?string => $this->mediaSettingService->getPublicUrl(MediaSetting::LOGO)),
             new TwigFunction('hero_url', fn (): ?string => $this->mediaSettingService->getPublicUrl(MediaSetting::HERO)),
+            new TwigFunction('favicon_url', fn (): ?string => $this->mediaSettingService->getPublicUrl(MediaSetting::FAVICON)),
         ];
     }
 }
