@@ -20,9 +20,9 @@ class GalleryRepository extends ServiceEntityRepository
     /**
      * @return array<array{0: Gallery, picturesCount: int}>
      */
-    public function findAllWithThumbnails(): array
+    public function findAllWithThumbnails(?Category $category = null, bool $uncategorizedOnly = false): array
     {
-        return $this->createQueryBuilder('g')
+        $qb = $this->createQueryBuilder('g')
             ->leftJoin('g.thumbnail', 't')
             ->leftJoin('g.pictures', 'p')
 
@@ -30,18 +30,33 @@ class GalleryRepository extends ServiceEntityRepository
             ->addSelect('COUNT(p.id) AS picturesCount')
 
             ->groupBy('g.id')
-            ->orderBy('g.createdAt', 'DESC')
+            ->orderBy('g.createdAt', 'DESC');
 
-            ->getQuery()
-            ->getResult();
+        if ($category !== null) {
+            $qb->innerJoin('g.categories', 'c')
+                ->andWhere('c = :category')
+                ->setParameter('category', $category);
+        } elseif ($uncategorizedOnly) {
+            $qb->andWhere('SIZE(g.categories) = 0');
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
-    public function countAll(): int
+    public function countAll(?Category $category = null, bool $uncategorizedOnly = false): int
     {
-        return (int) $this->createQueryBuilder('g')
-            ->select('COUNT(g.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
+        $qb = $this->createQueryBuilder('g')
+            ->select('COUNT(DISTINCT g.id)');
+
+        if ($category !== null) {
+            $qb->innerJoin('g.categories', 'c')
+                ->andWhere('c = :category')
+                ->setParameter('category', $category);
+        } elseif ($uncategorizedOnly) {
+            $qb->andWhere('SIZE(g.categories) = 0');
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
     }
 
     /**
