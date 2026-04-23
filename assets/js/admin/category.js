@@ -13,7 +13,7 @@ function initCategoriesSortable() {
         animation: 150,
         handle: '.drag-handle',
         ghostClass: 'opacity-50',
-        onEnd: async () => {
+        onUpdate: async () => {
             const ids = Array.from(container.querySelectorAll('[data-id]'))
                 .map(el => parseInt(el.dataset.id));
 
