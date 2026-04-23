@@ -4,6 +4,11 @@
 
 {% block page_title %}Galeries{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_gallery_index') }}
+{% endblock %}
+
 {% block content %}
     <div class="mb-6 flex justify-between items-center">
         <p class="text-slate-400">{{ galleryCount }} galerie(s)</p>
@@ -60,15 +65,28 @@
             {% endif %}
         </div>
     {% else %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6"
+             {% if activeCategory %}
+                 id="galleries-sortable"
+                 data-reorder-url="{{ path('app_admin_gallery_reorder') }}"
+                 data-category-id="{{ activeCategory.id }}"
+             {% endif %}>
             {% for item in galleries %}
                 {% set gallery = item[0] %}
                 {% set picturesCount = item.picturesCount %}
                 {% set updateUrl = path('app_admin_gallery_update', {id: gallery.id}|merge(filterParams)) %}
 
-                {# Mobile : carte compacte horizontale (vignette à gauche, texte à droite) #}
                 <a href="{{ updateUrl }}"
-                   class="sm:hidden block bg-slate-900 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 transition">
+                   data-id="{{ gallery.id }}"
+                   class="relative block bg-slate-900 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 transition">
+                    {% if activeCategory %}
+                        <span class="drag-handle absolute top-1.5 right-1.5 z-10 p-1 rounded bg-slate-800/90 text-slate-400 hover:text-white cursor-grab active:cursor-grabbing"
+                              aria-label="Déplacer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                            </svg>
+                        </span>
+                    {% endif %}
                     <div class="flex items-stretch">
                         <div class="shrink-0 w-24 h-24 bg-slate-800 relative">
                             {% if gallery.thumbnail %}
@@ -102,49 +120,6 @@
                         </div>
                     </div>
                 </a>
-
-                {# Desktop/tablette : carte verticale avec aperçu large #}
-                <div class="hidden sm:block bg-slate-900 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 transition">
-                    <div class="aspect-video bg-slate-800 relative">
-                        <a href="{{ updateUrl }}">
-                            {% if gallery.thumbnail %}
-                                <img src="{{ s3_url(gallery.thumbnail.filename) }}" alt="{{ gallery.title }}" class="w-full h-full object-cover">
-                            {% else %}
-                                <div class="w-full h-full flex items-center justify-center">
-                                    <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                                    </svg>
-                                </div>
-                            {% endif %}
-                            <div class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                {{ picturesCount }} image(s)
-                            </div>
-                        </a>
-                    </div>
-
-                    <div class="p-4">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h3 class="text-lg font-semibold text-white truncate">{{ gallery.title }}</h3>
-                            {% if not gallery.visibility %}
-                                <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                            {% endif %}
-                        </div>
-                        {% if gallery.description %}
-                            <p class="text-slate-400 text-sm mb-3 line-clamp-2">{{ gallery.description }}</p>
-                        {% endif %}
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500">{{ gallery.createdAt|date('d/m/Y') }}</span>
-                            <div class="flex space-x-2">
-                                <a href="{{ updateUrl }}"
-                                   class="text-purple-400 hover:text-purple-300 transition">
-                                    Modifier
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             {% endfor %}
         </div>
     {% endif %}

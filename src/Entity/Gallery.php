@@ -48,17 +48,14 @@ class Gallery
     #[ORM\Column(nullable: true)]
     private ?string $token = null;
 
-    /** @var Collection<int, Category> */
-    #[ORM\ManyToMany(targetEntity: Category::class, inversedBy: 'galleries')]
-    #[ORM\JoinTable(name: 'gallery_category')]
-    #[ORM\JoinColumn(name: 'gallery_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    #[ORM\InverseJoinColumn(name: 'category_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
-    private Collection $categories;
+    /** @var Collection<int, GalleryCategory> */
+    #[ORM\OneToMany(targetEntity: GalleryCategory::class, mappedBy: 'gallery', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    private Collection $galleryCategories;
 
     public function __construct()
     {
         $this->pictures = new ArrayCollection();
-        $this->categories = new ArrayCollection();
+        $this->galleryCategories = new ArrayCollection();
         $this->visibility = true;
     }
 
@@ -209,28 +206,66 @@ class Gallery
         $this->token = $this->generateToken();
     }
 
+    /** @return Collection<int, GalleryCategory> */
+    public function getGalleryCategories(): Collection
+    {
+        return $this->galleryCategories;
+    }
+
     /** @return Collection<int, Category> */
     public function getCategories(): Collection
     {
-        return $this->categories;
+        return $this->galleryCategories->map(fn (GalleryCategory $gc) => $gc->getCategory());
     }
 
-    public function addCategory(Category $category): static
+    /**
+     * Called by Symfony forms via the categories field. Syncs the internal
+     * GalleryCategory collection with the submitted list of Category entities,
+     * preserving positions for unchanged associations.
+     */
+    public function setCategories(Collection $newCategories): static
     {
-        if (!$this->categories->contains($category)) {
-            $this->categories->add($category);
-            $category->addGallery($this);
+        $newById = [];
+        foreach ($newCategories as $category) {
+            $newById[$category->getId()] = $category;
+        }
+
+        foreach ($this->galleryCategories->toArray() as $gc) {
+            if (!isset($newById[$gc->getCategory()->getId()])) {
+                $this->removeCategory($gc->getCategory());
+            }
+        }
+
+        foreach ($newById as $category) {
+            $this->addCategory($category);
         }
 
         return $this;
     }
 
-    public function removeCategory(Category $category): static
+    public function addCategory(Category $category): static
     {
-        if ($this->categories->removeElement($category)) {
-            $category->removeGallery($this);
+        foreach ($this->galleryCategories as $galleryCategory) {
+            if ($galleryCategory->getCategory() === $category) {
+                return $this;
+            }
         }
 
+        $galleryCategory = new GalleryCategory($this, $category);
+        $this->galleryCategories->add($galleryCategory);
+        $category->getGalleryCategories()->add($galleryCategory);
+        return $this;
+    }
+
+    public function removeCategory(Category $category): static
+    {
+        foreach ($this->galleryCategories as $galleryCategory) {
+            if ($galleryCategory->getCategory() === $category) {
+                $this->galleryCategories->removeElement($galleryCategory);
+                $category->getGalleryCategories()->removeElement($galleryCategory);
+                break;
+            }
+        }
         return $this;
     }
 }

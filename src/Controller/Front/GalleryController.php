@@ -26,15 +26,20 @@ class GalleryController extends AbstractController
         GalleryRepository $galleryRepository,
         CategoryRepository $categoryRepository,
     ): Response {
+        $categories = $categoryRepository->findVisibleOrdered();
         $slug = $request->query->get('category');
         $activeCategory = $slug ? $categoryRepository->findOneBy(['slug' => $slug, 'visibility' => true]) : null;
+
+        if ($activeCategory === null && !empty($categories)) {
+            return $this->redirectToRoute('app_front_gallery_index', ['category' => $categories[0]->getSlug()]);
+        }
 
         $galleries = $galleryRepository->findVisibleWithThumbnailsPaginated($activeCategory, 0, self::GALLERIES_PER_PAGE);
         $total = $galleryRepository->countVisible($activeCategory);
 
         return $this->render('front/gallery/index.html.twig', [
             'galleries' => $galleries,
-            'categories' => $categoryRepository->findVisibleOrdered(),
+            'categories' => $categories,
             'activeCategory' => $activeCategory,
             'hasMore' => count($galleries) < $total,
             'nextOffset' => count($galleries),
@@ -61,10 +66,11 @@ class GalleryController extends AbstractController
 
         $total = $galleryRepository->countVisible($activeCategory);
 
+        $showParams = $activeCategory ? ['category' => $activeCategory->getSlug()] : [];
         $payload = array_map(fn(Gallery $gallery) => [
             'id' => $gallery->getId(),
             'title' => $gallery->getTitle(),
-            'url' => $this->generateUrl('app_front_gallery_show', ['id' => $gallery->getId()]),
+            'url' => $this->generateUrl('app_front_gallery_show', ['id' => $gallery->getId()] + $showParams),
             'thumbnailUrl' => $gallery->getThumbnail() ? $s3Service->getPublicUrl($gallery->getThumbnail()->getFilename()) : null,
         ], $galleries);
 
@@ -88,6 +94,7 @@ class GalleryController extends AbstractController
 
         $pictures = $pictureRepository->findByGalleryPaginated($gallery, 0, self::PICTURES_PER_PAGE);
         $totalPictures = $pictureRepository->countByGallery($gallery);
+        $backParams = $request->query->get('category') ? ['category' => $request->query->get('category')] : [];
 
         return $this->render('front/gallery/show.html.twig', [
             'gallery' => $gallery,
@@ -95,6 +102,7 @@ class GalleryController extends AbstractController
             'totalPictures' => $totalPictures,
             'hasMore' => $totalPictures > self::PICTURES_PER_PAGE,
             'token' => $request->query->get('token'),
+            'backParams' => $backParams,
         ]);
     }
 

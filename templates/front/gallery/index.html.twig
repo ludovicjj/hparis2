@@ -28,34 +28,33 @@
             <div id="category-carousel" class="relative overflow-hidden mb-10" data-carousel>
                 <div data-carousel-track
                      class="flex gap-2 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-1 px-0 md:px-12 border border-transparent">
-                    <a href="{{ path('app_front_gallery_index') }}"
-                       {% if activeCategory is null %}data-active="true"{% endif %}
-                       class="shrink-0 w-[145px] truncate px-4 py-3 rounded-lg text-sm font-medium text-center border transition
-                           {{ activeCategory is null
-                               ? 'bg-gray-900 border-gray-900 text-white'
-                               : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:text-gray-900' }}">
-                        Toutes
-                    </a>
+                    {% set chipBase = 'shrink-0 w-[145px] truncate px-4 py-3 rounded-lg text-sm font-medium text-center border transition' %}
                     {% for category in categories %}
                         {% set isActive = activeCategory and activeCategory.id == category.id %}
-                        <a href="{{ path('app_front_gallery_index', {category: category.slug}) }}"
-                           {% if isActive %}data-active="true"{% endif %}
-                           title="{{ category.name }}"
-                           class="shrink-0 w-[145px] truncate px-4 py-3 rounded-lg text-sm font-medium text-center border transition
-                               {{ isActive
-                                   ? 'bg-gray-900 border-gray-900 text-white'
-                                   : 'bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:text-gray-900' }}">
-                            {{ category.name }}
-                        </a>
+                        {% if isActive %}
+                            <span data-active="true"
+                                  aria-current="page"
+                                  title="{{ category.name }}"
+                                  class="{{ chipBase }} bg-white border-black text-black cursor-default">
+                                {{ category.name }}
+                            </span>
+                        {% else %}
+                            <a href="{{ path('app_front_gallery_index', {category: category.slug}) }}"
+                               title="{{ category.name }}"
+                               class="{{ chipBase }} bg-white border-gray-200 text-gray-700 hover:border-gray-400 hover:text-gray-900">
+                                {{ category.name }}
+                            </a>
+                        {% endif %}
                     {% endfor %}
                 </div>
 
                 {# Left overlay: fade + chevron #}
                 <div class="hidden md:flex absolute left-0 top-0 bottom-0 items-center pointer-events-none">
-                    <div class="h-full w-12 flex items-center justify-start bg-gradient-to-r from-gray-50 via-gray-50 to-transparent pointer-events-auto">
+                    <div class="h-full w-12 flex items-center justify-start bg-gradient-to-r from-white via-white to-transparent pointer-events-auto">
                         <button type="button"
                                 data-carousel-prev
                                 aria-label="Précédent"
+                                disabled
                                 class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -66,10 +65,11 @@
 
                 {# Right overlay: fade + chevron #}
                 <div class="hidden md:flex absolute right-0 top-0 bottom-0 items-center pointer-events-none">
-                    <div class="h-full w-12 flex items-center justify-end bg-gradient-to-l from-gray-50 via-gray-50 to-transparent pointer-events-auto">
+                    <div class="h-full w-12 flex items-center justify-end bg-gradient-to-l from-white via-white to-transparent pointer-events-auto">
                         <button type="button"
                                 data-carousel-next
                                 aria-label="Suivant"
+                                disabled
                                 class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
@@ -102,9 +102,10 @@
                  data-next-offset="{{ nextOffset }}"
                  data-has-more="{{ hasMore ? 'true' : 'false' }}">
                 <div class="masonry-sizer w-full sm:w-1/2 lg:w-1/3"></div>
+                {% set showParams = activeCategory ? {category: activeCategory.slug} : {} %}
                 {% for gallery in galleries %}
                     <div class="masonry-item w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
-                        <a href="{{ path('app_front_gallery_show', {id: gallery.id}) }}" class="group block">
+                        <a href="{{ path('app_front_gallery_show', {id: gallery.id}|merge(showParams)) }}" class="group block">
                             <div class="overflow-hidden relative bg-gray-100">
                                 {% if gallery.thumbnail %}
                                     <img
