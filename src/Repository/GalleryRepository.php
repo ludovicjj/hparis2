@@ -33,11 +33,11 @@ class GalleryRepository extends ServiceEntityRepository
             ->orderBy('g.createdAt', 'DESC');
 
         if ($category !== null) {
-            $qb->innerJoin('g.categories', 'c')
-                ->andWhere('c = :category')
+            $qb->innerJoin('g.galleryCategories', 'gc')
+                ->andWhere('gc.category = :category')
                 ->setParameter('category', $category);
         } elseif ($uncategorizedOnly) {
-            $qb->andWhere('SIZE(g.categories) = 0');
+            $qb->andWhere('SIZE(g.galleryCategories) = 0');
         }
 
         return $qb->getQuery()->getResult();
@@ -49,11 +49,11 @@ class GalleryRepository extends ServiceEntityRepository
             ->select('COUNT(DISTINCT g.id)');
 
         if ($category !== null) {
-            $qb->innerJoin('g.categories', 'c')
-                ->andWhere('c = :category')
+            $qb->innerJoin('g.galleryCategories', 'gc')
+                ->andWhere('gc.category = :category')
                 ->setParameter('category', $category);
         } elseif ($uncategorizedOnly) {
-            $qb->andWhere('SIZE(g.categories) = 0');
+            $qb->andWhere('SIZE(g.galleryCategories) = 0');
         }
 
         return (int) $qb->getQuery()->getSingleScalarResult();
@@ -73,8 +73,8 @@ class GalleryRepository extends ServiceEntityRepository
             ->setMaxResults($limit);
 
         if ($category !== null) {
-            $qb->innerJoin('g.categories', 'c')
-                ->andWhere('c = :category')
+            $qb->innerJoin('g.galleryCategories', 'gc')
+                ->andWhere('gc.category = :category')
                 ->setParameter('category', $category);
         }
 
@@ -88,8 +88,8 @@ class GalleryRepository extends ServiceEntityRepository
             ->where('g.visibility = true');
 
         if ($category !== null) {
-            $qb->innerJoin('g.categories', 'c')
-                ->andWhere('c = :category')
+            $qb->innerJoin('g.galleryCategories', 'gc')
+                ->andWhere('gc.category = :category')
                 ->setParameter('category', $category);
         }
 

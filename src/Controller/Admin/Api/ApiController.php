@@ -24,7 +24,7 @@ class ApiController extends AbstractController
         $json = $serializer->serialize(
             $categories,
             'json',
-            [AbstractNormalizer::IGNORED_ATTRIBUTES => ['galleries']]
+            [AbstractNormalizer::IGNORED_ATTRIBUTES => ['galleryCategories']]
         );
 
         return new JsonResponse($json, 200, [], true);
