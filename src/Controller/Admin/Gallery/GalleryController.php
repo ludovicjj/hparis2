@@ -6,12 +6,14 @@ use App\Entity\Gallery;
 use App\Entity\Picture;
 use App\Form\GalleryType;
 use App\Repository\CategoryRepository;
+use App\Repository\GalleryCategoryRepository;
 use App\Repository\GalleryRepository;
 use App\Repository\PictureRepository;
 use App\Service\GalleryService;
 use App\Service\PictureService;
 use App\Service\ThumbnailService;
 use Doctrine\ORM\EntityManagerInterface;
+use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,6 +48,50 @@ class GalleryController extends AbstractController
             'uncategorizedOnly' => $uncategorizedOnly,
             'filterParams' => $galleryService->extractAdminFilterParams($request),
         ]);
+    }
+
+    #[Route('/reorder', name: 'reorder', methods: ['POST'])]
+    public function reorder(
+        Request $request,
+        CategoryRepository $categoryRepository,
+        GalleryCategoryRepository $galleryCategoryRepository,
+        EntityManagerInterface $entityManager,
+    ): JsonResponse {
+        try {
+            $payload = $request->toArray();
+            $categoryId = $payload['categoryId'] ?? null;
+            $ids = $payload['ids'] ?? [];
+
+            if (!is_int($categoryId) || !is_array($ids)) {
+                throw new InvalidArgumentException('Invalid input data.');
+            }
+
+            $category = $categoryRepository->find($categoryId);
+            if ($category === null) {
+                throw new InvalidArgumentException('Category not found.');
+            }
+
+            $galleryCategories = $galleryCategoryRepository->findByCategoryAndGalleryIds($category, $ids);
+            $indexed = [];
+            foreach ($galleryCategories as $gc) {
+                $indexed[$gc->getGallery()->getId()] = $gc;
+            }
+
+            foreach ($ids as $position => $id) {
+                if (isset($indexed[$id])) {
+                    $indexed[$id]->setPosition($position);
+                }
+            }
+
+            $entityManager->flush();
+
+            return $this->json(['success' => true]);
+        } catch (Throwable $exception) {
+            return $this->json([
+                'success' => false,
+                'message' => $exception->getMessage(),
+            ], Response::HTTP_BAD_REQUEST);
+        }
     }
 
     #[Route('/create', name: 'create', methods: ['GET', 'POST'])]

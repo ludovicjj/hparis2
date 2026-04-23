@@ -35,7 +35,9 @@ class GalleryRepository extends ServiceEntityRepository
         if ($category !== null) {
             $qb->innerJoin('g.galleryCategories', 'gc')
                 ->andWhere('gc.category = :category')
-                ->setParameter('category', $category);
+                ->setParameter('category', $category)
+                ->orderBy('gc.position', 'ASC')
+                ->addOrderBy('g.createdAt', 'DESC');
         } elseif ($uncategorizedOnly) {
             $qb->andWhere('SIZE(g.galleryCategories) = 0');
         }

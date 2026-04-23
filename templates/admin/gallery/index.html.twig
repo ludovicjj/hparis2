@@ -4,6 +4,11 @@
 
 {% block page_title %}Galeries{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_gallery_index') }}
+{% endblock %}
+
 {% block content %}
     <div class="mb-6 flex justify-between items-center">
         <p class="text-slate-400">{{ galleryCount }} galerie(s)</p>
@@ -60,14 +65,28 @@
             {% endif %}
         </div>
     {% else %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6"
+             {% if activeCategory %}
+                 id="galleries-sortable"
+                 data-reorder-url="{{ path('app_admin_gallery_reorder') }}"
+                 data-category-id="{{ activeCategory.id }}"
+             {% endif %}>
             {% for item in galleries %}
                 {% set gallery = item[0] %}
                 {% set picturesCount = item.picturesCount %}
                 {% set updateUrl = path('app_admin_gallery_update', {id: gallery.id}|merge(filterParams)) %}
 
                 <a href="{{ updateUrl }}"
-                   class="block bg-slate-900 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 transition">
+                   data-id="{{ gallery.id }}"
+                   class="relative block bg-slate-900 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 transition">
+                    {% if activeCategory %}
+                        <span class="drag-handle absolute top-1.5 right-1.5 z-10 p-1 rounded bg-slate-800/90 text-slate-400 hover:text-white cursor-grab active:cursor-grabbing"
+                              aria-label="Déplacer">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM8 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zM20 18a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+                            </svg>
+                        </span>
+                    {% endif %}
                     <div class="flex items-stretch">
                         <div class="shrink-0 w-24 h-24 bg-slate-800 relative">
                             {% if gallery.thumbnail %}
