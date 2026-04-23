@@ -35,7 +35,7 @@
                             <span data-active="true"
                                   aria-current="page"
                                   title="{{ category.name }}"
-                                  class="{{ chipBase }} bg-gray-900 border-gray-900 text-white cursor-default">
+                                  class="{{ chipBase }} bg-white border-black text-black cursor-default">
                                 {{ category.name }}
                             </span>
                         {% else %}
@@ -50,10 +50,11 @@
 
                 {# Left overlay: fade + chevron #}
                 <div class="hidden md:flex absolute left-0 top-0 bottom-0 items-center pointer-events-none">
-                    <div class="h-full w-12 flex items-center justify-start bg-gradient-to-r from-gray-50 via-gray-50 to-transparent pointer-events-auto">
+                    <div class="h-full w-12 flex items-center justify-start bg-gradient-to-r from-white via-white to-transparent pointer-events-auto">
                         <button type="button"
                                 data-carousel-prev
                                 aria-label="Précédent"
+                                disabled
                                 class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
@@ -64,10 +65,11 @@
 
                 {# Right overlay: fade + chevron #}
                 <div class="hidden md:flex absolute right-0 top-0 bottom-0 items-center pointer-events-none">
-                    <div class="h-full w-12 flex items-center justify-end bg-gradient-to-l from-gray-50 via-gray-50 to-transparent pointer-events-auto">
+                    <div class="h-full w-12 flex items-center justify-end bg-gradient-to-l from-white via-white to-transparent pointer-events-auto">
                         <button type="button"
                                 data-carousel-next
                                 aria-label="Suivant"
+                                disabled
                                 class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
