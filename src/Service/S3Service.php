@@ -197,4 +197,22 @@ class S3Service
             return false;
         }
     }
+
+    /**
+     * Return the size of an object in bytes, or false if the object does not exist
+     * or the metadata cannot be retrieved.
+     */
+    public function getFileSize(string $key): int|false
+    {
+        try {
+            $result = $this->client->headObject([
+                'Bucket' => $this->bucket,
+                'Key' => $key,
+            ]);
+
+            return (int) ($result['ContentLength'] ?? 0);
+        } catch (Exception) {
+            return false;
+        }
+    }
 }
