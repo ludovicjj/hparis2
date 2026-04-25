@@ -15,8 +15,8 @@ export class GalleryMasonry {
             itemSelector: '.masonry-item',
             columnWidth: '.masonry-sizer',
             percentPosition: true,
-            transitionDuration: '0.3s',
-            stagger: 30,
+            transitionDuration: '0',
+            stagger: 0,
         });
 
         // Initial layout after images load (height is unknown until then)
@@ -56,9 +56,8 @@ export class GalleryMasonry {
             const newItems = data.galleries.map((gallery) => this.renderItem(gallery));
             newItems.forEach((item) => this.root.appendChild(item));
 
-            imagesLoaded(newItems).on('always', () => {
-                this.masonry.appended(newItems);
-            });
+            this.masonry.appended(newItems);
+            imagesLoaded(newItems).on('progress', () => this.masonry.layout());
 
             this.nextOffset = data.nextOffset;
             this.hasMore = data.hasMore;
