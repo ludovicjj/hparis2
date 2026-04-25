@@ -567,7 +567,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         }>,
  *     },
  *     mailer?: bool|array{ // Mailer configuration
- *         enabled?: bool, // Default: false
+ *         enabled?: bool, // Default: true
  *         message_bus?: scalar|null, // The message bus to use. Defaults to the default bus if the Messenger component is installed. // Default: null
  *         dsn?: scalar|null, // Default: null
  *         transports?: array<string, scalar|null>,
@@ -1439,6 +1439,13 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         template?: scalar|null, // Default: "@SchebTwoFactor/Authentication/form.html.twig"
  *     },
  * }
+ * @psalm-type KarserRecaptcha3Config = array{
+ *     site_key: scalar|null,
+ *     secret_key: scalar|null,
+ *     score_threshold?: float, // Default: 0.5
+ *     host?: scalar|null, // Default host is "www.google.com", if it is not reachable then use "www.recaptcha.net" instead. // Default: "www.google.com"
+ *     enabled?: bool, // Default: true
+ * }
  * @psalm-type ConfigType = array{
  *     imports?: ImportsConfig,
  *     parameters?: ParametersConfig,
@@ -1451,6 +1458,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *     security?: SecurityConfig,
  *     monolog?: MonologConfig,
  *     scheb_two_factor?: SchebTwoFactorConfig,
+ *     karser_recaptcha3?: KarserRecaptcha3Config,
  *     "when@dev"?: array{
  *         imports?: ImportsConfig,
  *         parameters?: ParametersConfig,
@@ -1465,6 +1473,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         web_profiler?: WebProfilerConfig,
  *         monolog?: MonologConfig,
  *         scheb_two_factor?: SchebTwoFactorConfig,
+ *         karser_recaptcha3?: KarserRecaptcha3Config,
  *     },
  *     "when@prod"?: array{
  *         imports?: ImportsConfig,
@@ -1478,6 +1487,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         security?: SecurityConfig,
  *         monolog?: MonologConfig,
  *         scheb_two_factor?: SchebTwoFactorConfig,
+ *         karser_recaptcha3?: KarserRecaptcha3Config,
  *     },
  *     "when@test"?: array{
  *         imports?: ImportsConfig,
@@ -1492,6 +1502,7 @@ namespace Symfony\Component\DependencyInjection\Loader\Configurator;
  *         web_profiler?: WebProfilerConfig,
  *         monolog?: MonologConfig,
  *         scheb_two_factor?: SchebTwoFactorConfig,
+ *         karser_recaptcha3?: KarserRecaptcha3Config,
  *     },
  *     ...<string, ExtensionType|array{ // extra keys must follow the when@%env% pattern or match an extension alias
  *         imports?: ImportsConfig,

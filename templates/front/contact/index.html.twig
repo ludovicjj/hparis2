@@ -1,0 +1,73 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% form_theme form 'form/theme.html.twig' %}
+
+{% block title %}Contact - {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('front_contact') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('front_contact') }}
+{% endblock %}
+
+{% block body %}
+    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        <div class="text-center mb-10">
+            <h1 class="font-['Bodoni_Moda',serif] font-normal uppercase tracking-wider text-5xl md:text-7xl text-gray-900 mb-4">
+                Contact
+            </h1>
+            <p class="text-lg text-gray-600">
+                Une question, un projet ? Écrivez-nous.
+            </p>
+        </div>
+
+        {% for type, messages in app.flashes %}
+            {% for message in messages %}
+                <div class="mb-6 px-4 py-3 rounded-lg border text-sm {% if type == 'success' %}bg-green-50 border-green-300 text-green-800{% elseif type == 'error' %}bg-red-50 border-red-300 text-red-800{% else %}bg-blue-50 border-blue-300 text-blue-800{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endfor %}
+
+        {{ form_start(form, {attr: {class: 'space-y-6', novalidate: 'novalidate'}}) }}
+            <div>
+                {{ form_label(form.email, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+                {{ form_widget(form.email, {attr: {class: 'block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition'}}) }}
+                {{ form_errors(form.email) }}
+            </div>
+
+            <div>
+                {{ form_label(form.subject, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+                {{ form_widget(form.subject, {attr: {class: 'block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition'}}) }}
+                {{ form_errors(form.subject) }}
+            </div>
+
+            <div>
+                {{ form_label(form.message, null, {label_attr: {class: 'block text-sm font-medium text-gray-700 mb-2'}}) }}
+                {{ form_widget(form.message, {attr: {class: 'block w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition resize-none'}}) }}
+                {{ form_errors(form.message) }}
+            </div>
+
+            {{ form_row(form.captcha) }}
+
+            <div class="flex justify-end">
+                <button type="submit"
+                        class="inline-flex items-center justify-center bg-gray-900 hover:bg-gray-800 text-white font-semibold px-8 py-3 rounded-lg transition-all">
+                    Envoyer
+                </button>
+            </div>
+
+            <p class="text-xs text-gray-500 text-center">
+                Ce site est protégé par reCAPTCHA. Les
+                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" class="underline hover:text-gray-700">règles de confidentialité</a>
+                et les
+                <a href="https://policies.google.com/terms" target="_blank" rel="noopener" class="underline hover:text-gray-700">conditions d'utilisation</a>
+                de Google s'appliquent.
+            </p>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}
