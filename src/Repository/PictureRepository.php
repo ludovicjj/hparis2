@@ -107,4 +107,19 @@ class PictureRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    /**
+     * @return Picture[]
+     */
+    public function findStuckProcessing(\DateTimeImmutable $threshold): array
+    {
+        return $this->createQueryBuilder('p')
+            ->where('p.status = :status')
+            ->andWhere('p.createdAt < :threshold')
+            ->setParameter('status', Picture::STATUS_PROCESSING)
+            ->setParameter('threshold', $threshold)
+            ->orderBy('p.createdAt', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

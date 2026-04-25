@@ -18,8 +18,8 @@
             <h1 class="font-['Bodoni_Moda',serif] font-normal uppercase tracking-wider text-5xl md:text-7xl text-gray-900 mb-4">
                 Galleries
             </h1>
-            <p class="text-xl text-gray-600 max-w-2xl mx-auto">
-                Explorez nos collections de photos
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Explorez nos collections de galleries
             </p>
         </div>
 
@@ -122,9 +122,15 @@
                                     </div>
                                 {% endif %}
 
-                                <!-- Overlay avec titre au survol -->
-                                <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
-                                    <h3 class="text-white text-xl font-semibold text-center px-4">{{ gallery.title }}</h3>
+                                {# Mobile: dark overlay always visible, centered title + "Voir" CTA #}
+                                <div class="md:hidden absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
+                                    <h3 class="text-white text-base font-semibold">{{ gallery.title }}</h3>
+                                    <span class="mt-4 inline-block border border-white/70 text-white bg-white/10 font-medium text-sm px-6 py-2 rounded-lg transition-all">Voir</span>
+                                </div>
+
+                                {# Desktop: title only on hover (no CTA needed, hover itself is the affordance) #}
+                                <div class="hidden md:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 items-center justify-center text-center px-4">
+                                    <h3 class="text-white text-xl font-semibold">{{ gallery.title }}</h3>
                                 </div>
                             </div>
                         </a>
