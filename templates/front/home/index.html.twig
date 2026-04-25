@@ -4,7 +4,7 @@
 
 {% block body %}
     {% set heroUrl = hero_url() %}
-    <section class="relative h-[calc(100svh-186px)] md:h-[calc(100svh-146px)] flex flex-col bg-white overflow-hidden">
+    <section class="relative h-[calc(100dvh-186px)] md:h-[calc(100dvh-146px)] flex flex-col bg-white overflow-hidden">
         {% if heroUrl %}
             <img src="{{ heroUrl }}" alt="" class="absolute inset-0 w-full h-full object-cover">
             <div class="absolute inset-0 bg-black/40"></div>
