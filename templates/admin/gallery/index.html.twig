@@ -4,10 +4,15 @@
 
 {% block page_title %}Galeries{% endblock %}
 
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('admin_gallery_index') }}
+{% endblock %}
+
 {% block content %}
     <div class="mb-6 flex justify-between items-center">
         <p class="text-slate-400">{{ galleryCount }} galerie(s)</p>
-        <a href="{{ path('app_admin_gallery_create') }}"
+        <a href="{{ path('app_admin_gallery_create', filterParams) }}"
            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition flex items-center">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -16,69 +21,105 @@
         </a>
     </div>
 
+    {% if categories is not empty %}
+        {% set chipBase = 'px-4 py-2 rounded-lg text-sm font-medium border transition' %}
+        {% set chipActive = 'bg-purple-600 border-purple-600 text-white' %}
+        {% set chipIdle = 'bg-slate-900 border-slate-700 text-slate-300 hover:border-slate-500 hover:text-white' %}
+        <div class="mb-6 flex flex-wrap gap-2">
+            <a href="{{ path('app_admin_gallery_index') }}"
+               class="{{ chipBase }} {{ activeCategory is null and not uncategorizedOnly ? chipActive : chipIdle }}">
+                Toutes
+            </a>
+            {% for category in categories %}
+                {% set isActive = activeCategory and activeCategory.id == category.id %}
+                <a href="{{ path('app_admin_gallery_index', {category: category.slug}) }}"
+                   class="{{ chipBase }} {{ isActive ? chipActive : chipIdle }}">
+                    {{ category.name }}
+                </a>
+            {% endfor %}
+            <a href="{{ path('app_admin_gallery_index', {uncategorized: 1}) }}"
+               class="{{ chipBase }} {{ uncategorizedOnly ? chipActive : chipIdle }}">
+                Sans catégorie
+            </a>
+        </div>
+    {% endif %}
+
     {% if galleries is empty %}
         <div class="bg-slate-900 rounded-xl p-12 border border-slate-700 text-center">
             <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
             </svg>
-            <p class="text-slate-400 mb-4">Aucune galerie pour le moment</p>
-            <a href="{{ path('app_admin_gallery_create') }}"
-               class="inline-flex items-center text-purple-400 hover:text-purple-300 transition">
-                Créer votre première galerie
-                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                </svg>
-            </a>
+            {% if activeCategory %}
+                <p class="text-slate-400 mb-4">Aucune galerie dans la catégorie « {{ activeCategory.name }} »</p>
+            {% elseif uncategorizedOnly %}
+                <p class="text-slate-400 mb-4">Aucune galerie sans catégorie</p>
+            {% else %}
+                <p class="text-slate-400 mb-4">Aucune galerie pour le moment</p>
+                <a href="{{ path('app_admin_gallery_create') }}"
+                   class="inline-flex items-center text-purple-400 hover:text-purple-300 transition">
+                    Créer votre première galerie
+                    <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            {% endif %}
         </div>
     {% else %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6"
+             {% if activeCategory %}
+                 id="galleries-sortable"
+                 data-reorder-url="{{ path('app_admin_gallery_reorder') }}"
+                 data-category-id="{{ activeCategory.id }}"
+             {% endif %}>
             {% for item in galleries %}
                 {% set gallery = item[0] %}
                 {% set picturesCount = item.picturesCount %}
-                <div class="bg-slate-900 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 transition">
-                    {# Thumbnail container #}
-                    <div class="aspect-video bg-slate-800 relative">
-                        <a href="{{ path('app_admin_gallery_update', {id: gallery.id}) }}">
-                            {# Thumbnail #}
+                {% set updateUrl = path('app_admin_gallery_update', {id: gallery.id}|merge(filterParams)) %}
+
+                <a href="{{ updateUrl }}"
+                   data-id="{{ gallery.id }}"
+                   class="relative block bg-slate-900 rounded-xl border border-slate-700 overflow-hidden hover:border-slate-600 transition">
+                    {% if activeCategory %}
+                        <span class="drag-handle absolute top-1.5 right-1.5 z-10 p-1 rounded bg-slate-800/90 text-slate-400 hover:text-white cursor-grab active:cursor-grabbing"
+                              aria-label="Déplacer">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                            </svg>
+                        </span>
+                    {% endif %}
+                    <div class="flex items-stretch">
+                        <div class="shrink-0 w-24 h-24 bg-slate-800 relative">
                             {% if gallery.thumbnail %}
                                 <img src="{{ s3_url(gallery.thumbnail.filename) }}" alt="{{ gallery.title }}" class="w-full h-full object-cover">
                             {% else %}
                                 <div class="w-full h-full flex items-center justify-center">
-                                    <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                                     </svg>
                                 </div>
                             {% endif %}
-                            <div class="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
-                                {{ picturesCount }} image(s)
-                            </div>
-                        </a>
-                    </div>
-
-                    {# Content #}
-                    <div class="p-4">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h3 class="text-lg font-semibold text-white truncate">{{ gallery.title }}</h3>
-                            {% if not gallery.visibility %}
-                                <svg class="w-4 h-4 text-purple-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                                </svg>
-                            {% endif %}
                         </div>
-                        {% if gallery.description %}
-                            <p class="text-slate-400 text-sm mb-3 line-clamp-2">{{ gallery.description }}</p>
-                        {% endif %}
-                        <div class="flex items-center justify-between text-sm">
-                            <span class="text-slate-500">{{ gallery.createdAt|date('d/m/Y') }}</span>
-                            <div class="flex space-x-2">
-                                <a href="{{ path('app_admin_gallery_update', {id: gallery.id}) }}"
-                                   class="text-purple-400 hover:text-purple-300 transition">
-                                    Modifier
-                                </a>
+                        <div class="flex-1 min-w-0 p-3 flex flex-col justify-between">
+                            <h3 class="text-sm font-semibold text-white truncate">{{ gallery.title }}</h3>
+                            <div class="flex items-center justify-between gap-2 text-xs text-slate-500">
+                                <span>{{ gallery.createdAt|date('d/m/Y') }}</span>
+                                <div class="inline-flex items-center gap-2">
+                                    {% if not gallery.visibility %}
+                                        <svg class="w-3 h-3 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-label="Privée">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                        </svg>
+                                    {% endif %}
+                                    <span class="inline-flex items-center gap-1">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                        {{ picturesCount }}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             {% endfor %}
         </div>
     {% endif %}

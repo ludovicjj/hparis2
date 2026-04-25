@@ -129,7 +129,7 @@
 
             {# Form action #}
             <div class="flex items-center justify-between pt-6">
-                <a href="{{ path('app_admin_gallery_index') }}" class="text-slate-400 hover:text-white transition">
+                <a href="{{ path('app_admin_gallery_index', filterParams) }}" class="text-slate-400 hover:text-white transition">
                     &larr; Retour aux galeries
                 </a>
                 <button type="submit"
@@ -210,7 +210,7 @@
         {# Danger zone #}
         <div class="bg-slate-900 rounded-xl p-6 border border-red-900/50">
             <h2 class="text-lg font-semibold text-red-400 mb-4">Zone de danger</h2>
-            <form action="{{ path('app_admin_gallery_delete', {id: gallery.id}) }}" method="post"
+            <form action="{{ path('app_admin_gallery_delete', {id: gallery.id}|merge(filterParams)) }}" method="post"
                   onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette galerie ?')">
                 <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ gallery.id) }}">
                 <button type="submit"

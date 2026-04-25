@@ -119,7 +119,7 @@ readonly class PictureService
     public function deleteFile(Picture $picture): void
     {
         // Temp file: only present while the picture is still processing.
-        if ($picture->getStatus() === Picture::STATUS_PROCESSING) {
+        if (in_array($picture->getStatus(), [Picture::STATUS_PROCESSING, Picture::STATUS_FAILED])) {
             $tempKey = $this->buildTempKey($picture);
             $this->s3Service->deleteFile($tempKey);
         }

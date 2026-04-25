@@ -41,14 +41,14 @@ class Category
     #[ORM\Column]
     private ?DateTimeImmutable $updatedAt = null;
 
-    /** @var Collection<int, Gallery> */
-    #[ORM\ManyToMany(targetEntity: Gallery::class, mappedBy: 'categories')]
-    private Collection $galleries;
+    /** @var Collection<int, GalleryCategory> */
+    #[ORM\OneToMany(targetEntity: GalleryCategory::class, mappedBy: 'category')]
+    private Collection $galleryCategories;
 
     public function __construct()
     {
         $this->visibility = true;
-        $this->galleries = new ArrayCollection();
+        $this->galleryCategories = new ArrayCollection();
     }
 
     #[ORM\PrePersist]
@@ -127,25 +127,9 @@ class Category
         return $this->updatedAt;
     }
 
-    /** @return Collection<int, Gallery> */
-    public function getGalleries(): Collection
+    /** @return Collection<int, GalleryCategory> */
+    public function getGalleryCategories(): Collection
     {
-        return $this->galleries;
-    }
-
-    public function addGallery(Gallery $gallery): static
-    {
-        if (!$this->galleries->contains($gallery)) {
-            $this->galleries->add($gallery);
-        }
-
-        return $this;
-    }
-
-    public function removeGallery(Gallery $gallery): static
-    {
-        $this->galleries->removeElement($gallery);
-
-        return $this;
+        return $this->galleryCategories;
     }
 }

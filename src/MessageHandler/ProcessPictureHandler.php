@@ -17,6 +17,10 @@ use Throwable;
 #[AsMessageHandler]
 readonly class ProcessPictureHandler
 {
+    private const int MAX_FILE_SIZE_BYTES = 20 * 1024 * 1024;
+    private const int MAX_IMAGE_DIMENSION = 8000;
+    private const array ALLOWED_IMAGE_TYPES = [IMAGETYPE_JPEG, IMAGETYPE_PNG];
+
     public function __construct(
         private PictureRepository      $pictureRepository,
         private ImageOptimizerService  $imageOptimizerService,
@@ -37,22 +41,71 @@ readonly class ProcessPictureHandler
                 return;
             }
 
-            // 1 - Pull the original binary back from S3
             $tempKey = PictureService::buildTempKey($picture);
-            $sourceContent = $this->s3Service->getFileContent($tempKey);
 
-            if ($sourceContent === false) {
+            // 1 - Fetch and check file size via HEAD request before downloading
+            $fileSize = $this->s3Service->getFileSize($tempKey);
+            if ($fileSize === false) {
                 throw new RuntimeException(sprintf(
                     'Temp object "%s" not found on S3 for picture #%d.',
                     $tempKey,
                     $pictureId
                 ));
             }
+            if ($fileSize > self::MAX_FILE_SIZE_BYTES) {
+                throw new RuntimeException(sprintf(
+                    'Temp object "%s" too large (%d bytes, max %d) for picture #%d.',
+                    $tempKey,
+                    $fileSize,
+                    self::MAX_FILE_SIZE_BYTES,
+                    $pictureId
+                ));
+            }
 
-            // 2 - Resize in memory: 1200px lightbox + 400px thumbnail
+            // 2 - Pull the original binary back from S3
+            $sourceContent = $this->s3Service->getFileContent($tempKey);
+            if ($sourceContent === false) {
+                throw new RuntimeException(sprintf(
+                    'Failed to download temp object "%s" for picture #%d.',
+                    $tempKey,
+                    $pictureId
+                ));
+            }
+
+            // 3 - Validate image type and dimensions before feeding GD. getimagesizefromstring
+            //     only reads the header, so it's safe to call on the raw string.
+            $imageInfo = @getimagesizefromstring($sourceContent);
+            if ($imageInfo === false) {
+                throw new RuntimeException(sprintf(
+                    'Temp object "%s" is not a valid image for picture #%d.',
+                    $tempKey,
+                    $pictureId
+                ));
+            }
+            [$width, $height, $imageType] = $imageInfo;
+            if (!in_array($imageType, self::ALLOWED_IMAGE_TYPES, true)) {
+                throw new RuntimeException(sprintf(
+                    'Temp object "%s" has unsupported image type %d for picture #%d.',
+                    $tempKey,
+                    $imageType,
+                    $pictureId
+                ));
+            }
+            if ($width > self::MAX_IMAGE_DIMENSION || $height > self::MAX_IMAGE_DIMENSION) {
+                throw new RuntimeException(sprintf(
+                    'Temp object "%s" dimensions too large (%dx%d, max %d) for picture #%d.',
+                    $tempKey,
+                    $width,
+                    $height,
+                    self::MAX_IMAGE_DIMENSION,
+                    $pictureId
+                ));
+            }
+
+            // 4 - Resize in memory: 1200px lightbox + 400px thumbnail
             $optimized = $this->imageOptimizerService->optimizePicture($sourceContent);
 
-            // 3 - Compute the final S3 keys for this picture
+            // 5 - Compute the final S3 keys for this picture
             $baseFilename = $picture->getFilename();
             $baseName = pathinfo($baseFilename, PATHINFO_FILENAME);
             $galleryId = $picture->getGallery()->getId();
@@ -60,7 +113,7 @@ readonly class ProcessPictureHandler
             $lightboxKey = sprintf('galleries/%d/%s.jpg', $galleryId, $baseName);
             $thumbnailKey = sprintf('galleries/%d/%s-thumb.jpg', $galleryId, $baseName);
 
-            // 4 - Upload both variants as public-readable JPEGs
+            // 6 - Upload both variants as public-readable JPEGs
             if (!$this->s3Service->uploadPublicFile($lightboxKey, $optimized['lightbox'], 'image/jpeg')) {
                 throw new RuntimeException(sprintf('Failed to upload lightbox to S3 (%s).', $lightboxKey));
             }
@@ -68,13 +121,13 @@ readonly class ProcessPictureHandler
                 throw new RuntimeException(sprintf('Failed to upload thumbnail to S3 (%s).', $thumbnailKey));
             }
 
-            // 5 - Persist the new state
+            // 7 - Persist the new state
             $picture->setLightboxPath($lightboxKey);
             $picture->setThumbnailPath($thumbnailKey);
             $picture->setStatus(Picture::STATUS_READY);
             $this->entityManager->flush();
 
-            // 6 - Cleanup the temp object
+            // 8 - Cleanup the temp object
             $this->s3Service->deleteFile($tempKey);
         } catch (Throwable $exception) {
             $this->logger->error('Failed to process picture #{id}: {message}', [
