@@ -1,6 +1,43 @@
 {% extends 'front/base_front.html.twig' %}
 
-{% block title %}Accueil - {{ parent() }}{% endblock %}
+{% block title %}Hollywood Paris — Studio photo professionnel à Paris{% endblock %}
+
+{% block meta_description %}Hollywood Paris est un studio photo professionnel situé à Paris. Mariages, événements, mode, portraits corporate — découvrez nos galeries de photographies.{% endblock %}
+
+{% block og_image -%}
+    {%- set heroForOg = hero_url() -%}
+    {%- if heroForOg -%}
+        <meta property="og:image" content="{{ heroForOg }}">
+        <meta name="twitter:image" content="{{ heroForOg }}">
+    {%- endif -%}
+{%- endblock %}
+
+{% block jsonld -%}
+    {%- set socialUrls = [] -%}
+    {%- for link in social_links() -%}
+        {%- set socialUrls = socialUrls|merge([link.url]) -%}
+    {%- endfor -%}
+    {%- set businessImage = hero_url() ?: logo_url() -%}
+    {%- set business = {
+        '@context': 'https://schema.org',
+        '@type': 'PhotographBusiness',
+        'name': 'Hollywood Paris',
+        'description': "Studio photo professionnel basé à Paris. Mariages, événements, mode, portraits corporate. Prestations sur rendez-vous.",
+        'url': app.request.schemeAndHttpHost ~ path('app_front_home'),
+        'telephone': '+33695592937',
+        'areaServed': [
+            {'@type': 'City', 'name': 'Paris'},
+            {'@type': 'AdministrativeArea', 'name': 'Île-de-France'}
+        ]
+    } -%}
+    {%- if businessImage -%}
+        {%- set business = business|merge({'image': businessImage}) -%}
+    {%- endif -%}
+    {%- if socialUrls is not empty -%}
+        {%- set business = business|merge({'sameAs': socialUrls}) -%}
+    {%- endif -%}
+    <script type="application/ld+json">{{ business|json_encode|raw }}</script>
+{%- endblock %}
 
 {% block body %}
     {% set heroUrl = hero_url() %}
@@ -22,7 +59,7 @@
             <div class="pb-10 flex justify-center">
                 <a href="{{ path('app_front_gallery_index') }}"
                    class="border {{ heroUrl ? 'border-white/70 text-white hover:bg-white/10' : 'border-gray-400 text-gray-700 hover:bg-gray-50' }} font-semibold px-8 py-3 rounded-lg transition-all">
-                    Voir les galleries
+                    Voir les galeries
                 </a>
             </div>
         </div>

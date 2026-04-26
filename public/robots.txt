@@ -1,0 +1,10 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /admin
+Disallow: /login
+Disallow: /logout
+Disallow: /2fa
+Disallow: /2fa/
+Allow: /
+
+Sitemap: https://hollywoodparis.fr/sitemap.xml

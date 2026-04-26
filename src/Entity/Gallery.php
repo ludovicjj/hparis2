@@ -9,6 +9,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Exception;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: GalleryRepository::class)]
@@ -48,6 +49,9 @@ class Gallery
     #[ORM\Column(nullable: true)]
     private ?string $token = null;
 
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $slug = null;
+
     /** @var Collection<int, GalleryCategory> */
     #[ORM\OneToMany(targetEntity: GalleryCategory::class, mappedBy: 'gallery', cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $galleryCategories;
@@ -65,6 +69,10 @@ class Gallery
         $this->token = $this->generateToken();
         $this->createdAt = new DateTimeImmutable();
         $this->updatedAt = new DateTimeImmutable();
+
+        if ($this->slug === null && $this->title !== null) {
+            $this->slug = new AsciiSlugger()->slug($this->title)->lower()->toString();
+        }
     }
 
     #[ORM\PreUpdate]
@@ -188,6 +196,18 @@ class Gallery
     public function setToken(?string $token): static
     {
         $this->token = $token;
+
+        return $this;
+    }
+
+    public function getSlug(): ?string
+    {
+        return $this->slug;
+    }
+
+    public function setSlug(?string $slug): static
+    {
+        $this->slug = $slug;
 
         return $this;
     }

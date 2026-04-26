@@ -1,6 +1,49 @@
 {% extends 'front/base_front.html.twig' %}
 
-{% block title %}{{ gallery.title }} - {{ parent() }}{% endblock %}
+{% block title %}{{ gallery.title }} — Galerie photo | Hollywood Paris{% endblock %}
+
+{% block meta_description %}{{ gallery.description ?: gallery.title ~ ' — Galerie photo réalisée par Hollywood Paris, studio photo professionnel à Paris.' }}{% endblock %}
+
+{% block meta_robots -%}
+    {%- if gallery.visibility -%}
+        index, follow
+    {%- else -%}
+        noindex, nofollow
+    {%- endif -%}
+{%- endblock %}
+
+{% block canonical %}{{ app.request.schemeAndHttpHost ~ path('app_front_gallery_show', {id: gallery.id, slug: gallery.slug ?: 'gallery'}) }}{% endblock %}
+
+{% block og_type %}article{% endblock %}
+
+{% block og_image -%}
+    {%- if gallery.thumbnail -%}
+        <meta property="og:image" content="{{ s3_url(gallery.thumbnail.filename) }}">
+        <meta name="twitter:image" content="{{ s3_url(gallery.thumbnail.filename) }}">
+    {%- endif -%}
+{%- endblock %}
+
+{% block jsonld -%}
+    {%- if gallery.visibility -%}
+        {%- set imageUrls = [] -%}
+        {%- for lightboxPath in pictureLightboxPaths -%}
+            {%- set imageUrls = imageUrls|merge([s3_url(lightboxPath)]) -%}
+        {%- endfor -%}
+        {%- set gallerySchema = {
+            '@context': 'https://schema.org',
+            '@type': 'ImageGallery',
+            'name': gallery.title,
+            'url': app.request.schemeAndHttpHost ~ path('app_front_gallery_show', {id: gallery.id, slug: gallery.slug ?: 'gallery'})
+        } -%}
+        {%- if gallery.description -%}
+            {%- set gallerySchema = gallerySchema|merge({'description': gallery.description}) -%}
+        {%- endif -%}
+        {%- if imageUrls is not empty -%}
+            {%- set gallerySchema = gallerySchema|merge({'image': imageUrls}) -%}
+        {%- endif -%}
+        <script type="application/ld+json">{{ gallerySchema|json_encode|raw }}</script>
+    {%- endif -%}
+{%- endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -20,7 +63,7 @@
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                 </svg>
-                Retour aux galleries
+                Retour aux galeries
             </a>
             <h1 class="font-['Bodoni_Moda',serif] font-normal text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ gallery.title }}</h1>
             {% if gallery.description %}

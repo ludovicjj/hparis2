@@ -4,6 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Hollywood Paris{% endblock %}</title>
+
+    <meta name="description" content="{% block meta_description %}Hollywood Paris — Studio photo professionnel à Paris. Mariages, événements, mode, corporate. Découvrez nos galeries.{% endblock %}">
+    <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
+    <link rel="canonical" href="{% block canonical %}{{ app.request.schemeAndHttpHost ~ app.request.pathInfo }}{% endblock %}">
+
+    <meta property="og:site_name" content="Hollywood Paris">
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:title" content="{{ block('title') }}">
+    <meta property="og:description" content="{{ block('meta_description') }}">
+    <meta property="og:url" content="{{ block('canonical') }}">
+    <meta property="og:locale" content="fr_FR">
+    {% block og_image %}{% endblock %}
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ block('title') }}">
+    <meta name="twitter:description" content="{{ block('meta_description') }}">
+
     <link rel="icon" href="{{ favicon_url() ?: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>' }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -20,6 +37,7 @@
         {{ encore_entry_script_tags('front_app') }}
     {% endblock %}
 
+    {% block jsonld %}{% endblock %}
 </head>
 <body>
     <div class="min-h-[100dvh] flex flex-col bg-white">
