@@ -52,6 +52,7 @@ class GalleryController extends AbstractController
         GalleryRepository $galleryRepository,
         CategoryRepository $categoryRepository,
         S3Service $s3Service,
+        GalleryService $galleryService,
     ): JsonResponse {
         $offset = max(0, $request->query->getInt('offset'));
         $slug = $request->query->get('category');
@@ -65,12 +66,12 @@ class GalleryController extends AbstractController
         );
 
         $total = $galleryRepository->countVisible($activeCategory);
-
         $showParams = $activeCategory ? ['category' => $activeCategory->getSlug()] : [];
+
         $payload = array_map(fn(Gallery $gallery) => [
             'id' => $gallery->getId(),
             'title' => $gallery->getTitle(),
-            'url' => $this->generateUrl('app_front_gallery_show', ['id' => $gallery->getId()] + $showParams),
+            'url' => $this->generateUrl('app_front_gallery_show', ['id' => $gallery->getId(), 'slug' => $galleryService->resolveSlug($gallery)] + $showParams),
             'thumbnailUrl' => $gallery->getThumbnail() ? $s3Service->getPublicUrl($gallery->getThumbnail()->getFilename()) : null,
         ], $galleries);
 
@@ -81,9 +82,10 @@ class GalleryController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'show', methods: ['GET'])]
+    #[Route('/{id<\d+>}/{slug}', name: 'show', requirements: ['slug' => '[a-z0-9-]+'], methods: ['GET'])]
     public function show(
         Gallery $gallery,
+        string $slug,
         Request $request,
         PictureRepository $pictureRepository,
         GalleryService $galleryService,
@@ -92,9 +94,23 @@ class GalleryController extends AbstractController
             return $this->redirectToRoute('app_front_home');
         }
 
+        $expectedSlug = $galleryService->resolveSlug($gallery);
+
+        if ($slug !== $expectedSlug) {
+            return $this->redirectToRoute(
+                'app_front_gallery_show',
+                ['id' => $gallery->getId(), 'slug' => $expectedSlug] + $request->query->all(),
+                Response::HTTP_MOVED_PERMANENTLY,
+            );
+        }
+
         $pictures = $pictureRepository->findByGalleryPaginated($gallery, 0, self::PICTURES_PER_PAGE);
         $totalPictures = $pictureRepository->countByGallery($gallery);
         $backParams = $request->query->get('category') ? ['category' => $request->query->get('category')] : [];
+
+        $pictureLightboxPaths = $gallery->isVisibility()
+            ? $pictureRepository->findReadyLightboxPathsByGallery($gallery)
+            : [];
 
         return $this->render('front/gallery/show.html.twig', [
             'gallery' => $gallery,
@@ -102,10 +118,28 @@ class GalleryController extends AbstractController
             'hasMore' => $totalPictures > self::PICTURES_PER_PAGE,
             'token' => $request->query->get('token'),
             'backParams' => $backParams,
+            'pictureLightboxPaths' => $pictureLightboxPaths,
         ]);
     }
 
-    #[Route('/{id}/pictures', name: 'pictures', methods: ['GET'])]
+    #[Route('/{id<\d+>}', name: 'show_legacy', methods: ['GET'])]
+    public function showLegacy(
+        Gallery $gallery,
+        Request $request,
+        GalleryService $galleryService,
+    ): Response {
+        if (!$galleryService->canAccessGallery($gallery, $request->query->get('token'))) {
+            return $this->redirectToRoute('app_front_home');
+        }
+
+        return $this->redirectToRoute(
+            'app_front_gallery_show',
+            ['id' => $gallery->getId(), 'slug' => $galleryService->resolveSlug($gallery)] + $request->query->all(),
+            Response::HTTP_MOVED_PERMANENTLY,
+        );
+    }
+
+    #[Route('/api/{id<\d+>}/pictures', name: 'pictures', methods: ['GET'])]
     public function pictures(
         Gallery $gallery,
         Request $request,

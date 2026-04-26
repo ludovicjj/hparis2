@@ -86,6 +86,23 @@ class PictureRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return string[]
+     */
+    public function findReadyLightboxPathsByGallery(Gallery $gallery, int $limit = 50): array
+    {
+        return $this->createQueryBuilder('p')
+            ->select('p.lightboxPath')
+            ->where('p.gallery = :gallery')
+            ->andWhere('p.status = :status')
+            ->orderBy('p.position', 'ASC')
+            ->setParameter('gallery', $gallery)
+            ->setParameter('status', Picture::STATUS_READY)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getSingleColumnResult();
+    }
+
     public function findMaxPositionByGallery(Gallery $gallery): int
     {
         return (int) $this->createQueryBuilder('p')
