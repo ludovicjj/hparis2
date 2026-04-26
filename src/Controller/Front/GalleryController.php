@@ -99,7 +99,6 @@ class GalleryController extends AbstractController
         return $this->render('front/gallery/show.html.twig', [
             'gallery' => $gallery,
             'pictures' => $pictures,
-            'totalPictures' => $totalPictures,
             'hasMore' => $totalPictures > self::PICTURES_PER_PAGE,
             'token' => $request->query->get('token'),
             'backParams' => $backParams,

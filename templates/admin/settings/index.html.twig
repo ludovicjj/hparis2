@@ -11,6 +11,7 @@
 
 {% block content %}
     <div class="mb-10 grid grid-cols-1 md:grid-cols-2 gap-6">
+        {# Logo #}
         <div class="flex flex-col">
             <div class="mb-6">
                 <h2 class="text-lg font-semibold text-white">Logo du site</h2>
@@ -64,6 +65,7 @@
             </div>
         </div>
 
+        {# Favicon #}
         <div class="flex flex-col">
             <div class="mb-6">
                 <h2 class="text-lg font-semibold text-white">Favicon du site</h2>
@@ -118,6 +120,7 @@
         </div>
     </div>
 
+    {# Hero #}
     <div class="mb-10">
         <div class="mb-6">
             <h2 class="text-lg font-semibold text-white">Hero du site</h2>
@@ -185,6 +188,7 @@
         </a>
     </div>
 
+    {# Social Links #}
     {% if socialLinks is empty %}
         <div class="bg-slate-900 rounded-xl p-12 border border-slate-700 text-center">
             <svg class="w-16 h-16 mx-auto text-slate-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
