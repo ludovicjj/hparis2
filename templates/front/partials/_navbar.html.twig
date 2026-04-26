@@ -55,11 +55,11 @@
             <div class="px-4 py-4 border-t border-gray-200 space-y-4">
                 {% set links = social_links() %}
                 {% if links is not empty %}
-                    <div class="flex items-center justify-center space-x-6">
+                    <div class="flex items-center justify-center space-x-4">
                         {% for link in links %}
                             <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer"
-                               class="text-gray-500 hover:text-gray-900 transition" aria-label="{{ link.platform }}">
-                                {{ include('partials/icons/' ~ link.platform ~ '.html.twig', {class: 'w-6 h-6'}, ignore_missing=true) }}
+                               class="hover:opacity-75 transition" aria-label="{{ link.platform }}">
+                                {{ include('partials/icons/' ~ link.platform ~ '.html.twig', {class: 'w-6 h-6', colored: true}, ignore_missing=true) }}
                             </a>
                         {% endfor %}
                     </div>

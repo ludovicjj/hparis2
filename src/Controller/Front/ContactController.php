@@ -5,7 +5,6 @@ namespace App\Controller\Front;
 use App\Form\ContactType;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Karser\Recaptcha3Bundle\Validator\Constraints\Recaptcha3Validator;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,7 +20,6 @@ class ContactController extends AbstractController
         Request $request,
         MailerInterface $mailer,
         LoggerInterface $logger,
-        Recaptcha3Validator $recaptcha3Validator,
         #[Autowire('%env(CONTACT_FROM)%')] string $contactFrom,
         #[Autowire('%env(CONTACT_TO)%')] string $contactTo,
     ): Response {
@@ -30,7 +28,6 @@ class ContactController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data = $form->getData();
-            $score = $recaptcha3Validator->getLastResponse()->getScore();
 
             $email = new TemplatedEmail()
                 ->from($contactFrom)

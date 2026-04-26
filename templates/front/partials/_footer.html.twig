@@ -14,9 +14,12 @@
             {% if links is not empty %}
                 <div class="flex items-center space-x-4">
                     {% for link in links %}
-                        <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer"
-                           class="text-gray-500 hover:text-gray-900 transition" aria-label="{{ link.platform }}">
-                            {{ include('partials/icons/' ~ link.platform ~ '.html.twig', {class: 'w-6 h-6'}, ignore_missing=true) }}
+                        <a href="{{ link.url }}"
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           class="hover:opacity-75 transition" aria-label="{{ link.platform }}"
+                        >
+                            {{ include('partials/icons/' ~ link.platform ~ '.html.twig', {class: 'w-6 h-6', colored: true}, ignore_missing=true) }}
                         </a>
                     {% endfor %}
                 </div>
