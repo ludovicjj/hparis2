@@ -1,6 +1,22 @@
 {% extends 'front/base_front.html.twig' %}
 
-{% block title %}Galleries - {{ parent() }}{% endblock %}
+{% block title -%}
+    {%- if activeCategory -%}
+        {{ activeCategory.name }} — Galeries photo | Hollywood Paris
+    {%- else -%}
+        Galeries photo | Hollywood Paris
+    {%- endif -%}
+{%- endblock %}
+
+{% block meta_description -%}
+    {%- if activeCategory -%}
+        Découvrez nos galeries photo dans la catégorie {{ activeCategory.name }} — Hollywood Paris, studio photo professionnel à Paris.
+    {%- else -%}
+        Toutes les galeries photo d'Hollywood Paris : mariages, événements, mode et portraits corporate réalisés à Paris.
+    {%- endif -%}
+{%- endblock %}
+
+{% block canonical %}{{ app.request.schemeAndHttpHost ~ path('app_front_gallery_index', activeCategory ? {category: activeCategory.slug} : {}) }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}

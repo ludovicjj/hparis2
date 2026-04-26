@@ -1,6 +1,16 @@
 {% extends 'front/base_front.html.twig' %}
 
-{% block title %}Accueil - {{ parent() }}{% endblock %}
+{% block title %}Hollywood Paris — Studio photo professionnel à Paris{% endblock %}
+
+{% block meta_description %}Hollywood Paris est un studio photo professionnel situé à Paris. Mariages, événements, mode, portraits corporate — découvrez nos galeries de photographies.{% endblock %}
+
+{% block og_image %}
+{% set heroForOg = hero_url() %}
+{%- if heroForOg -%}
+    <meta property="og:image" content="{{ heroForOg }}">
+    <meta name="twitter:image" content="{{ heroForOg }}">
+{%- endif -%}
+{% endblock %}
 
 {% block body %}
     {% set heroUrl = hero_url() %}
