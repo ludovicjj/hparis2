@@ -4,18 +4,46 @@
 
 {% block meta_description %}{{ gallery.description ?: gallery.title ~ ' — Galerie photo réalisée par Hollywood Paris, studio photo professionnel à Paris.' }}{% endblock %}
 
-{% block meta_robots %}{% if gallery.visibility %}index, follow{% else %}noindex, nofollow{% endif %}{% endblock %}
+{% block meta_robots -%}
+    {%- if gallery.visibility -%}
+        index, follow
+    {%- else -%}
+        noindex, nofollow
+    {%- endif -%}
+{%- endblock %}
 
 {% block canonical %}{{ app.request.schemeAndHttpHost ~ path('app_front_gallery_show', {id: gallery.id}) }}{% endblock %}
 
 {% block og_type %}article{% endblock %}
 
-{% block og_image %}
-{%- if gallery.thumbnail -%}
-    <meta property="og:image" content="{{ s3_url(gallery.thumbnail.filename) }}">
-    <meta name="twitter:image" content="{{ s3_url(gallery.thumbnail.filename) }}">
-{%- endif -%}
-{% endblock %}
+{% block og_image -%}
+    {%- if gallery.thumbnail -%}
+        <meta property="og:image" content="{{ s3_url(gallery.thumbnail.filename) }}">
+        <meta name="twitter:image" content="{{ s3_url(gallery.thumbnail.filename) }}">
+    {%- endif -%}
+{%- endblock %}
+
+{% block jsonld -%}
+    {%- if gallery.visibility -%}
+        {%- set imageUrls = [] -%}
+        {%- for lightboxPath in pictureLightboxPaths -%}
+            {%- set imageUrls = imageUrls|merge([s3_url(lightboxPath)]) -%}
+        {%- endfor -%}
+        {%- set gallerySchema = {
+            '@context': 'https://schema.org',
+            '@type': 'ImageGallery',
+            'name': gallery.title,
+            'url': app.request.schemeAndHttpHost ~ path('app_front_gallery_show', {id: gallery.id})
+        } -%}
+        {%- if gallery.description -%}
+            {%- set gallerySchema = gallerySchema|merge({'description': gallery.description}) -%}
+        {%- endif -%}
+        {%- if imageUrls is not empty -%}
+            {%- set gallerySchema = gallerySchema|merge({'image': imageUrls}) -%}
+        {%- endif -%}
+        <script type="application/ld+json">{{ gallerySchema|json_encode|raw }}</script>
+    {%- endif -%}
+{%- endblock %}
 
 {% block stylesheets %}
     {{ parent() }}

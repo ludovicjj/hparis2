@@ -96,12 +96,17 @@ class GalleryController extends AbstractController
         $totalPictures = $pictureRepository->countByGallery($gallery);
         $backParams = $request->query->get('category') ? ['category' => $request->query->get('category')] : [];
 
+        $pictureLightboxPaths = $gallery->isVisibility()
+            ? $pictureRepository->findReadyLightboxPathsByGallery($gallery)
+            : [];
+
         return $this->render('front/gallery/show.html.twig', [
             'gallery' => $gallery,
             'pictures' => $pictures,
             'hasMore' => $totalPictures > self::PICTURES_PER_PAGE,
             'token' => $request->query->get('token'),
             'backParams' => $backParams,
+            'pictureLightboxPaths' => $pictureLightboxPaths,
         ]);
     }
 
