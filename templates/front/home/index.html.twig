@@ -20,7 +20,7 @@
     {%- set businessImage = hero_url() ?: logo_url() -%}
     {%- set business = {
         '@context': 'https://schema.org',
-        '@type': 'PhotographBusiness',
+        '@type': 'ProfessionalService',
         'name': 'Hollywood Paris',
         'description': "Studio photo professionnel basé à Paris. Mariages, événements, mode, portraits corporate. Prestations sur rendez-vous.",
         'url': app.request.schemeAndHttpHost ~ path('app_front_home'),
