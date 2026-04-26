@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Gallery;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 readonly class GalleryService
 {
@@ -19,7 +20,10 @@ readonly class GalleryService
      */
     public function generatePublicUrl(Gallery $gallery): string
     {
-        $params = ['id' => $gallery->getId()];
+        $params = [
+            'id' => $gallery->getId(),
+            'slug' => $this->resolveSlug($gallery),
+        ];
 
         if (!$gallery->isVisibility()) {
             $params['token'] = $gallery->getToken();
@@ -30,6 +34,21 @@ readonly class GalleryService
             $params,
             UrlGeneratorInterface::ABSOLUTE_URL
         );
+    }
+
+    public function resolveSlug(Gallery $gallery): string
+    {
+        $slug = $gallery->getSlug();
+        if ($slug !== null && $slug !== '') {
+            return $slug;
+        }
+
+        $title = $gallery->getTitle();
+        if ($title !== null && $title !== '') {
+            return new AsciiSlugger()->slug($title)->lower()->toString();
+        }
+
+        return 'gallery';
     }
 
     public function canAccessGallery(Gallery $gallery, ?string $token): bool

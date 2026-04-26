@@ -32,10 +32,10 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div class="text-center mb-8">
             <h1 class="font-['Bodoni_Moda',serif] font-normal uppercase tracking-wider text-5xl md:text-7xl text-gray-900 mb-4">
-                Galleries
+                Galeries
             </h1>
             <p class="text-sm md:text-lg text-gray-600 max-w-[200px] md:max-w-2xl mx-auto">
-                Explorez nos collections de galleries
+                Explorez nos collections de galeries
             </p>
         </div>
 
@@ -121,7 +121,7 @@
                 {% set showParams = activeCategory ? {category: activeCategory.slug} : {} %}
                 {% for gallery in galleries %}
                     <div class="masonry-item w-full sm:w-1/2 lg:w-1/3 px-2 mb-4">
-                        <a href="{{ path('app_front_gallery_show', {id: gallery.id}|merge(showParams)) }}" class="group block">
+                        <a href="{{ path('app_front_gallery_show', {id: gallery.id, slug: gallery.slug ?: 'gallery'}|merge(showParams)) }}" class="group block">
                             <div class="overflow-hidden relative bg-gray-100">
                                 {% if gallery.thumbnail %}
                                     <img

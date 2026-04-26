@@ -4,6 +4,7 @@ namespace App\Controller\Front;
 
 use App\Repository\CategoryRepository;
 use App\Repository\GalleryRepository;
+use App\Service\GalleryService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,6 +16,7 @@ class SitemapController extends AbstractController
     public function index(
         GalleryRepository $galleryRepository,
         CategoryRepository $categoryRepository,
+        GalleryService $galleryService,
     ): Response {
         $urls = [];
 
@@ -51,11 +53,7 @@ class SitemapController extends AbstractController
         $galleries = $galleryRepository->findBy(['visibility' => true]);
         foreach ($galleries as $gallery) {
             $urls[] = [
-                'loc' => $this->generateUrl(
-                    'app_front_gallery_show',
-                    ['id' => $gallery->getId()],
-                    UrlGeneratorInterface::ABSOLUTE_URL
-                ),
+                'loc' => $galleryService->generatePublicUrl($gallery),
                 'lastmod' => $gallery->getUpdatedAt()?->format('Y-m-d'),
                 'changefreq' => 'monthly',
                 'priority' => '0.8',
