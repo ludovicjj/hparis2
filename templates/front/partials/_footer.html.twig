@@ -1,13 +1,21 @@
 <footer class="border-t border-gray-200 py-4 bg-white">
     <div class="max-w-7xl mx-auto px-4">
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
-            <!-- Coordonnées -->
-            <div class="text-gray-500">
-                <p class="font-semibold text-gray-900">Assistante</p>
-                <p>
-                    <a href="tel:+33695592937" class="hover:text-gray-900 transition">+33 6 95 59 29 37</a>
-                </p>
-            </div>
+            {% if app.request.attributes.get('_route') == 'app_front_home' %}
+                <!-- International -->
+                <div class="flex items-center gap-3 text-gray-900">
+                    {{ include('partials/icons/globe.html.twig', {class: 'w-7 h-7 shrink-0'}) }}
+                    <p class="text-xs md:text-base">Notre Équipe travaille à l’international</p>
+                </div>
+            {% else %}
+                <!-- Coordonnées -->
+                <div class="text-gray-500">
+                    <p class="font-semibold text-gray-900">Assistante Planning</p>
+                    <p>
+                        <a href="tel:+33695592937" class="hover:text-gray-900 transition">+33 6 95 59 29 37</a>
+                    </p>
+                </div>
+            {% endif %}
 
             <!-- Réseaux sociaux -->
             {% set links = social_links() %}

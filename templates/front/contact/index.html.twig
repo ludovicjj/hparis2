@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block body %}
-    <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+    <div class="w-full max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div class="text-center mb-10">
             <h1 class="font-['Bodoni_Moda',serif] font-normal uppercase tracking-wider text-5xl md:text-7xl text-gray-900 mb-4">
                 Contact
@@ -25,6 +25,11 @@
             <p class="text-sm md:text-lg text-gray-600 max-w-[200px] md:max-w-none mx-auto">
                 Une question, un projet ? Écrivez-nous.
             </p>
+        </div>
+
+        <div class="flex flex-col items-center justify-center gap-3 text-gray-900 mb-10">
+            {{ include('partials/icons/globe.html.twig', {class: 'w-7 h-7 shrink-0'}) }}
+            <p class="text-xs md:text-base">Notre Équipe travaille à l’international</p>
         </div>
 
         {% for type, messages in app.flashes %}
