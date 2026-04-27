@@ -41,7 +41,7 @@
 
 {% block body %}
     {% set heroUrl = hero_url() %}
-    <section class="relative h-[calc(100dvh-186px)] md:h-[calc(100dvh-146px)] flex flex-col bg-white overflow-hidden">
+    <section class="relative flex-1 min-h-0 flex flex-col bg-white overflow-hidden">
         {% if heroUrl %}
             <img src="{{ heroUrl }}" alt="" class="absolute inset-0 w-full h-full object-cover">
             <div class="absolute inset-0 bg-black/40"></div>
@@ -52,9 +52,10 @@
                 <h1 class="font-['Bodoni_Moda',serif] font-normal uppercase tracking-wider text-4xl md:text-6xl {{ heroUrl ? 'text-white' : 'text-gray-900' }}">
                     Hollywood Paris
                 </h1>
-                <p class="mt-6 text-sm md:text-lg max-w-[200px] md:max-w-2xl {{ heroUrl ? 'text-gray-100' : 'text-gray-600' }}">
-                    Votre studio photo professionnel au coeur de Paris
-                </p>
+                <div class="mt-6 text-sm md:text-lg max-w-[230px] md:max-w-2xl {{ heroUrl ? 'text-gray-100' : 'text-gray-600' }}">
+                    <p>Votre studio photo au coeur de Paris</p>
+                    <p>Événements Pub & Marketing</p>
+                </div>
             </div>
             <div class="pb-10 flex justify-center">
                 <a href="{{ path('app_front_gallery_index') }}"
