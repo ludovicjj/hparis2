@@ -8,7 +8,7 @@ import { initCategorySearch } from '../components/CategorySearch';
 new CopyText('#copy-url-btn', '#gallery-url', '#copy-url-text');
 
 // Init Reset Token button
-new ResetToken('#reset-token-btn', '#gallery-url', '#reset-token-text');
+new ResetToken('#reset-token-btn', '#gallery-url', '#reset-token-text', '#gallery-qrcode');
 
 // Init Thumbnail preview
 initThumbnailPreview('#gallery_thumbnailFile', '#thumbnail-dropzone');

@@ -1,8 +1,9 @@
 export class ResetToken {
-    constructor(buttonSelector, urlElementSelector, labelSelector) {
+    constructor(buttonSelector, urlElementSelector, labelSelector, qrCodeImgSelector = null) {
         this.button = document.querySelector(buttonSelector);
         this.urlElement = document.querySelector(urlElementSelector);
         this.labelElement = document.querySelector(labelSelector);
+        this.qrCodeImg = qrCodeImgSelector ? document.querySelector(qrCodeImgSelector) : null;
 
         if (this.button) {
             this.url = this.button.dataset.url;
@@ -29,6 +30,10 @@ export class ResetToken {
             if (response.ok) {
                 const data = await response.json();
                 this.urlElement.textContent = data.url;
+
+                if (this.qrCodeImg && data.qrCode) {
+                    this.qrCodeImg.src = data.qrCode;
+                }
 
                 this.labelElement.textContent = 'OK !';
                 this.button.classList.remove('bg-slate-700', 'hover:bg-slate-600');

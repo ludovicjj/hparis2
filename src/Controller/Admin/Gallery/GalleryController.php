@@ -12,6 +12,7 @@ use App\Repository\PictureRepository;
 use App\Service\Gallery\GalleryService;
 use App\Service\Gallery\PictureService;
 use App\Service\Gallery\ThumbnailService;
+use App\Service\QrCodeService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -139,6 +140,7 @@ class GalleryController extends AbstractController
         ThumbnailService $thumbnailService,
         PictureService $pictureService,
         GalleryService $galleryService,
+        QrCodeService $qrCodeService,
     ): Response {
         $pictures = $pictureRepository->findByGalleryAndOrderPosition($gallery);
         $pictureIds = $pictureRepository->findIdsByGallery($gallery);
@@ -167,6 +169,7 @@ class GalleryController extends AbstractController
             'pictures' => $pictures,
             'pictureIds' => $pictureIds,
             'front_gallery_url' => $frontGalleryUrl,
+            'front_gallery_qr_code' => $qrCodeService->generateDataUri($frontGalleryUrl),
             'filterParams' => $filterParams,
         ]);
     }
@@ -207,15 +210,19 @@ class GalleryController extends AbstractController
     public function resetToken(
         Gallery $gallery,
         EntityManagerInterface $entityManager,
-        GalleryService $galleryService
+        GalleryService $galleryService,
+        QrCodeService $qrCodeService,
     ): Response
     {
         $gallery->resetToken();
         $entityManager->flush();
 
+        $url = $galleryService->generatePublicUrl($gallery);
+
         return $this->json([
             'success' => true,
-            'url' => $galleryService->generatePublicUrl($gallery),
+            'url' => $url,
+            'qrCode' => $qrCodeService->generateDataUri($url),
         ]);
     }
 
