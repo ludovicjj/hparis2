@@ -6,6 +6,11 @@
 
 {% block canonical %}{{ app.request.schemeAndHttpHost ~ path('app_front_team_index') }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('front_team_index') }}
+{% endblock %}
+
 {% block javascripts %}
     {{ parent() }}
     {{ encore_entry_script_tags('front_team_index') }}
@@ -34,8 +39,27 @@
                 {% for video in videos %}
                     {% set thumbnailUrl = video.thumbnailUrl %}
                     <article class="flex flex-col">
+                        {% if video.title %}
+                            <h2 class="text-lg font-semibold text-gray-900">
+                                {{ video.title }}
+                            </h2>
+                        {% endif %}
+
+                        {% if video.description %}
+                            <div class="{% if video.title %}mt-2{% endif %} text-sm text-gray-600
+                                        [&_p]:mb-3 [&_p:last-child]:mb-0
+                                        [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3
+                                        [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
+                                        [&_strong]:font-semibold
+                                        [&_em]:italic
+                                        [&_u]:underline
+                                        [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:mb-3">
+                                {{ video.description|raw }}
+                            </div>
+                        {% endif %}
+
                         <button type="button"
-                                class="group relative aspect-video bg-gray-900 overflow-hidden rounded-lg shadow-sm cursor-pointer"
+                                class="{% if video.title or video.description %}mt-6{% endif %} group relative aspect-video bg-gray-900 overflow-hidden rounded-lg shadow-sm cursor-pointer"
                                 data-video-embed
                                 data-embed-url="{{ video.provider.embedUrl(video.externalId) }}"
                                 data-video-title="{{ video.title ?: 'Vidéo' }}"
@@ -56,22 +80,22 @@
                             </div>
                         </button>
 
-                        {% if video.title %}
-                            <h2 class="mt-4 text-lg font-semibold text-gray-900">
-                                {{ video.title }}
-                            </h2>
-                        {% endif %}
-
-                        {% if video.description %}
-                            <div class="mt-2 text-sm text-gray-600
-                                        [&_p]:mb-3 [&_p:last-child]:mb-0
-                                        [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3
-                                        [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
-                                        [&_strong]:font-semibold
-                                        [&_em]:italic
-                                        [&_u]:underline
-                                        [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:mb-3">
-                                {{ video.description|raw }}
+                        {% set pictures = picturesByVideoId[video.id] ?? [] %}
+                        {% if pictures is not empty %}
+                            <div class="mt-6 swiper w-full min-w-0 overflow-hidden" data-video-pictures-swiper>
+                                <div class="swiper-wrapper">
+                                    {% for picture in pictures %}
+                                        <div class="swiper-slide">
+                                            <img src="{{ s3_url(picture.lightboxPath) }}"
+                                                 alt=""
+                                                 loading="lazy"
+                                                 class="block w-full aspect-video object-cover rounded-lg bg-gray-100">
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                                <div class="swiper-pagination !relative !mt-4"></div>
+                                <div class="swiper-button-prev !text-gray-700"></div>
+                                <div class="swiper-button-next !text-gray-700"></div>
                             </div>
                         {% endif %}
                     </article>

@@ -17,7 +17,16 @@
 
 {% block content %}
     <div class="w-full">
-        {{ form_start(form) }}
+        {{ form_start(form, {
+            'action': path('app_admin_options_create_stub'),
+            'attr': {
+                'data-video-picture-create': '',
+                'data-video-picture-upload-url': path('app_admin_api_video_picture_upload', {id: '__ID__'}),
+                'data-final-redirect-url': path('app_admin_options_index'),
+                'data-max-pictures': maxPictures,
+                'novalidate': 'novalidate'
+            }
+        }) }}
         <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6">
             <div class="mb-6">
                 <a href="{{ path('app_admin_options_index') }}" class="text-purple-400 hover:text-purple-300 transition">
@@ -54,12 +63,38 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-end pt-6">
-                <button type="submit"
-                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition">
-                    Ajouter la vidéo
-                </button>
+        </div>
+
+        {# Images carousel - queued, uploaded after Video creation #}
+        <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Images du carousel</h2>
+                    <p class="text-slate-400 text-sm">
+                        Glisse jusqu'à {{ maxPictures }} images (JPG/PNG, 5 Mo max).
+                        Elles seront uploadées juste après la création de la vidéo.
+                    </p>
+                </div>
+                <span class="text-slate-400 text-sm" data-pictures-counter></span>
             </div>
+
+            <div data-drop-zone
+                 class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-slate-500 transition mb-4">
+                <svg class="w-10 h-10 mx-auto text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <p class="text-slate-300 text-sm">Glisse une image ici ou clique pour sélectionner</p>
+                <input type="file" accept="image/jpeg,image/png" multiple class="hidden" data-file-input>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" data-queue-grid></div>
+        </div>
+
+        <div class="flex items-center justify-end pt-2 mb-6">
+            <button type="submit"
+                    class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                Ajouter la vidéo
+            </button>
         </div>
         {{ form_end(form) }}
     </div>

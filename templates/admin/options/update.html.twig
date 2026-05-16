@@ -48,7 +48,13 @@
             </div>
         </div>
 
-        {{ form_start(form) }}
+        {{ form_start(form, {
+            'action': path('app_admin_options_update_stub', {id: video.id}),
+            'attr': {
+                'data-async-form': '',
+                'novalidate': 'novalidate'
+            }
+        }) }}
         <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6">
             <div class="mb-6">
                 <a href="{{ path('app_admin_options_index') }}" class="text-purple-400 hover:text-purple-300 transition">
@@ -93,5 +99,52 @@
             </div>
         </div>
         {{ form_end(form) }}
+
+        {# Images carousel #}
+        <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6"
+             data-video-picture-uploader
+             data-upload-url="{{ path('app_admin_api_video_picture_upload', {id: video.id}) }}"
+             data-reorder-url="{{ path('app_admin_api_video_picture_reorder', {id: video.id}) }}"
+             data-delete-url-template="{{ path('app_admin_api_video_picture_delete', {id: '__ID__'}) }}"
+             data-max-pictures="{{ maxPictures }}">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h2 class="text-lg font-semibold text-white">Images du carousel</h2>
+                    <p class="text-slate-400 text-sm">Glisse jusqu'à {{ maxPictures }} images (JPG/PNG, 5 Mo max).</p>
+                </div>
+                <span class="text-slate-400 text-sm" data-pictures-counter></span>
+            </div>
+
+            <div data-drop-zone
+                 class="border-2 border-dashed border-slate-600 rounded-lg p-8 text-center cursor-pointer hover:border-slate-500 transition mb-4">
+                <svg class="w-10 h-10 mx-auto text-slate-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <p class="text-slate-300 text-sm">Glisse une image ici ou clique pour sélectionner</p>
+                <input type="file" accept="image/jpeg,image/png" multiple class="hidden" data-file-input>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" data-pictures-grid>
+                {% for picture in videoPictures %}
+                    <div class="relative aspect-square bg-slate-800 border border-slate-700 rounded-lg overflow-hidden group"
+                         data-picture-id="{{ picture.id }}"
+                         data-csrf-token="{{ csrf_token('delete_video_picture' ~ picture.id) }}">
+                        <img src="{{ picture.thumbnailUrl }}" alt="" class="w-full h-full object-cover">
+                        <button type="button" data-drag-handle title="Déplacer"
+                                class="absolute top-1 left-1 p-1.5 bg-slate-900/70 hover:bg-slate-900 text-white rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                            </svg>
+                        </button>
+                        <button type="button" data-delete-picture title="Supprimer"
+                                class="absolute top-1 right-1 p-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 {% endblock %}

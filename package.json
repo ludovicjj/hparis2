@@ -30,6 +30,7 @@
         "imagesloaded": "^5.0.0",
         "masonry-layout": "^4.2.2",
         "sortablejs": "^1.15.6",
+        "swiper": "^12.1.4",
         "tom-select": "^2.6.0"
     }
 }

@@ -5,7 +5,11 @@ namespace App\Controller\Admin\Team;
 use App\Entity\Video;
 use App\Form\VideoType;
 use App\Repository\PageRepository;
+use App\Repository\VideoPictureRepository;
 use App\Repository\VideoRepository;
+use App\Service\JsonFormHandler;
+use App\Service\S3Service;
+use App\Service\Video\VideoPictureService;
 use App\Service\Video\VideoService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
@@ -32,61 +36,100 @@ class TeamController extends AbstractController
         ]);
     }
 
-    #[Route('/create', name: 'create', methods: ['GET', 'POST'])]
-    public function create(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        VideoRepository $videoRepository,
-        PageRepository $pageRepository,
-    ): Response {
-        $page = $pageRepository->findOneBySlug(self::PAGE_SLUG);
-        if ($page === null) {
-            throw $this->createNotFoundException(sprintf('Page "%s" not seeded. Run app:seed-pages.', self::PAGE_SLUG));
-        }
-
-        $video = new Video();
-        $form = $this->createForm(VideoType::class, $video);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $video->setPage($page);
-            $video->setPosition($videoRepository->getNextPosition());
-
-            $entityManager->persist($video);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Vidéo ajoutée avec succès.');
-
-            return $this->redirectToRoute('app_admin_team_index');
-        }
+    #[Route('/create', name: 'create', methods: ['GET'])]
+    public function create(): Response
+    {
+        $form = $this->createForm(VideoType::class, new Video());
 
         return $this->render('admin/team/create.html.twig', [
             'form' => $form,
+            'maxPictures' => VideoPictureService::MAX_PICTURES_PER_VIDEO,
         ]);
     }
 
-    #[Route('/{id}/update', name: 'update', methods: ['GET', 'POST'])]
+    #[Route('/{id}/update', name: 'update', methods: ['GET'])]
     public function update(
-        Request $request,
         Video $video,
-        EntityManagerInterface $entityManager,
         VideoService $videoService,
+        VideoPictureRepository $videoPictureRepository,
+        S3Service $s3Service,
     ): Response {
         $form = $this->createForm(VideoType::class, $video);
-        $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Vidéo modifiée avec succès.');
-
-            return $this->redirectToRoute('app_admin_team_index');
-        }
+        $videoPictures = array_map(
+            fn($videoPicture) => [
+                'id' => $videoPicture->getId(),
+                'thumbnailUrl' => $s3Service->getPublicUrl($videoPicture->getThumbnailPath()),
+            ],
+            $videoPictureRepository->findByVideoOrdered($video),
+        );
 
         return $this->render('admin/team/update.html.twig', [
             'video' => $video,
             'form' => $form,
             'front_video_url' => $videoService->generatePublicUrl($video),
+            'videoPictures' => $videoPictures,
+            'maxPictures' => VideoPictureService::MAX_PICTURES_PER_VIDEO,
+        ]);
+    }
+
+    #[Route('/create-stub', name: 'create_stub', methods: ['POST'])]
+    public function createStub(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        VideoRepository $videoRepository,
+        PageRepository $pageRepository,
+        JsonFormHandler $formHandler,
+    ): JsonResponse {
+        $page = $pageRepository->findOneBySlug(self::PAGE_SLUG);
+        if ($page === null) {
+            return $this->json(
+                ['error' => sprintf('Page "%s" not seeded. Run app:seed-pages.', self::PAGE_SLUG)],
+                Response::HTTP_INTERNAL_SERVER_ERROR,
+            );
+        }
+
+        $video = new Video();
+        $form = $this->createForm(VideoType::class, $video);
+
+        if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
+            return $errorResponse;
+        }
+
+        $video->setPage($page);
+        $video->setPosition($videoRepository->getNextPosition());
+
+        $entityManager->persist($video);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Vidéo ajoutée avec succès.');
+
+        return $this->json([
+            'id' => $video->getId(),
+            'redirectUrl' => $this->generateUrl('app_admin_team_update', ['id' => $video->getId()]),
+        ]);
+    }
+
+    #[Route('/{id}/update-stub', name: 'update_stub', methods: ['POST'])]
+    public function updateStub(
+        Request $request,
+        Video $video,
+        EntityManagerInterface $entityManager,
+        JsonFormHandler $formHandler,
+    ): JsonResponse {
+        $form = $this->createForm(VideoType::class, $video);
+
+        if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
+            return $errorResponse;
+        }
+
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Vidéo modifiée avec succès.');
+
+        return $this->json([
+            'id' => $video->getId(),
+            'redirectUrl' => $this->generateUrl('app_admin_team_index'),
         ]);
     }
 
@@ -110,8 +153,10 @@ class TeamController extends AbstractController
         Request $request,
         Video $video,
         EntityManagerInterface $entityManager,
+        VideoPictureService $videoPictureService,
     ): Response {
         if ($this->isCsrfTokenValid('delete' . $video->getId(), $request->request->get('_token'))) {
+            $videoPictureService->cleanupFilesForVideo($video);
             $entityManager->remove($video);
             $entityManager->flush();
 
