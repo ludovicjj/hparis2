@@ -13,6 +13,7 @@ use App\Service\Gallery\GalleryService;
 use App\Service\Gallery\PictureService;
 use App\Service\Gallery\ThumbnailService;
 use App\Service\QrCodeService;
+use App\Service\S3Service;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -179,24 +180,29 @@ class GalleryController extends AbstractController
         Request $request,
         Gallery $gallery,
         EntityManagerInterface $entityManager,
-        PictureService $pictureService,
-        ThumbnailService $thumbnailService,
+        S3Service $s3Service,
         GalleryService $galleryService,
     ): Response {
         $filterParams = $galleryService->extractAdminFilterParams($request);
 
         if ($this->isCsrfTokenValid('delete' . $gallery->getId(), $request->request->get('_token'))) {
-            // Remove la thumbnail S3
-            if ($gallery->getThumbnail()) {
-                $thumbnailService->deleteFile($gallery->getThumbnail());
-            }
-
-            // Remove pictures S3
+            // Temp objects for pictures still processing live at temp/{id}.jpg,
+            // outside the gallery prefix => collect them for batch removal.
+            $tempKeys = [];
             foreach ($gallery->getPictures() as $picture) {
-                $pictureService->deleteFile($picture);
+                if (in_array($picture->getStatus(), [Picture::STATUS_PROCESSING, Picture::STATUS_FAILED], true)) {
+                    $tempKeys[] = PictureService::buildTempKey($picture);
+                }
+            }
+            if (!empty($tempKeys)) {
+                $s3Service->deleteFiles($tempKeys);
             }
 
-            // Remove Entity - cascade delete Thumbnail and Pictures
+            // Batch-delete everything under galleries/{id}/ (cover + pictures)
+            $key = sprintf('galleries/%d/', $gallery->getId());
+            $s3Service->deleteFilesByPrefix($key);
+
+            // Remove Gallery => cascade deletes Thumbnail and Picture rows in DB.
             $entityManager->remove($gallery);
             $entityManager->flush();
 

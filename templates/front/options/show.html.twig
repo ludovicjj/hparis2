@@ -1,0 +1,90 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}{{ page_meta_title('options_show') }}{% endblock %}
+
+{% block meta_description %}{{ page_meta_description('options_show') }}{% endblock %}
+
+{% block meta_robots -%}
+    {%- if option.visibility -%}
+        index, follow
+    {%- else -%}
+        noindex, nofollow
+    {%- endif -%}
+{%- endblock %}
+
+{% block canonical %}{{ app.request.schemeAndHttpHost ~ path('app_front_options_show', {id: option.id}) }}{% endblock %}
+
+{% block og_type %}video.other{% endblock %}
+
+{% block og_image -%}
+    {%- if option.thumbnailUrl -%}
+        <meta property="og:image" content="{{ option.thumbnailUrl }}">
+        <meta name="twitter:image" content="{{ option.thumbnailUrl }}">
+    {%- endif -%}
+{%- endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {{ encore_entry_link_tags('front_options_index') }}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {{ encore_entry_script_tags('front_options_index') }}
+{% endblock %}
+
+{% block body %}
+    <div class="w-full max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-8">
+            <a href="{{ path('app_front_options_index') }}" class="inline-flex items-center text-gray-600 hover:text-gray-900 transition mb-4">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                </svg>
+                {{ 'options.back'|trans }}
+            </a>
+            {% if option.title %}
+                <h1 class="font-['Bodoni_Moda',serif] font-normal text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ option.title }}</h1>
+            {% endif %}
+        </div>
+
+        <div class="aspect-video bg-gray-900 overflow-hidden rounded-lg shadow-sm">
+            <iframe src="{{ option.provider.embedUrl(option.externalId) }}"
+                    title="{{ option.title ?: 'Vidéo' }}"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen
+                    class="w-full h-full border-0"></iframe>
+        </div>
+
+        {% if option.description %}
+            <div class="mt-6 text-sm md:text-base text-gray-600
+                        [&_p]:mb-3 [&_p:last-child]:mb-0
+                        [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:mb-3
+                        [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:mb-3
+                        [&_strong]:font-semibold
+                        [&_em]:italic
+                        [&_u]:underline
+                        [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:mb-3">
+                {{ option.description|raw }}
+            </div>
+        {% endif %}
+
+        {% if pictures is not empty %}
+            <div class="mt-6 swiper w-full min-w-0 overflow-hidden" data-video-pictures-swiper>
+                <div class="swiper-wrapper">
+                    {% for picture in pictures %}
+                        <div class="swiper-slide">
+                            <img src="{{ s3_url(picture.lightboxPath) }}"
+                                 alt=""
+                                 loading="lazy"
+                                 class="block w-full aspect-video object-cover rounded-lg bg-gray-100">
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="swiper-pagination !relative !mt-4"></div>
+                <div class="swiper-button-prev !text-gray-700"></div>
+                <div class="swiper-button-next !text-gray-700"></div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

@@ -38,12 +38,14 @@ video:
 team:
     title: Team
     subtitle1: Meet the Hollywood Paris team.
+    back: Back to Team
     empty: "No items available at the moment"
 
 # Front - options
 options:
     title: Options
     subtitle1: Explore the options offered by Hollywood Paris.
+    back: Back to options
     empty: "No options available at the moment"
 
 # Front - contact

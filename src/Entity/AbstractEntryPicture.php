@@ -2,38 +2,32 @@
 
 namespace App\Entity;
 
-use App\Repository\VideoPictureRepository;
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: VideoPictureRepository::class)]
-#[ORM\HasLifecycleCallbacks]
-class VideoPicture
+#[ORM\MappedSuperclass]
+abstract class AbstractEntryPicture
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    protected ?int $id = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $lightboxPath = null;
+    protected ?string $lightboxPath = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $thumbnailPath = null;
+    protected ?string $thumbnailPath = null;
 
     #[ORM\Column(options: ['default' => 0])]
-    private int $position = 0;
-
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private ?Video $video = null;
+    protected int $position = 0;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: true)]
-    private ?User $createdBy = null;
+    protected ?User $createdBy = null;
 
     #[ORM\Column]
-    private ?DateTimeImmutable $createdAt = null;
+    protected ?DateTimeImmutable $createdAt = null;
 
     #[ORM\PrePersist]
     public function onPrePersist(): void
@@ -78,18 +72,6 @@ class VideoPicture
     public function setPosition(int $position): static
     {
         $this->position = $position;
-
-        return $this;
-    }
-
-    public function getVideo(): ?Video
-    {
-        return $this->video;
-    }
-
-    public function setVideo(?Video $video): static
-    {
-        $this->video = $video;
 
         return $this;
     }

@@ -2,15 +2,15 @@
 
 namespace App\Controller\Admin\Options;
 
-use App\Entity\Video;
-use App\Form\VideoType;
+use App\Entity\Option;
+use App\Form\OptionType;
+use App\Repository\OptionPictureRepository;
+use App\Repository\OptionRepository;
 use App\Repository\PageRepository;
-use App\Repository\VideoPictureRepository;
-use App\Repository\VideoRepository;
 use App\Service\JsonFormHandler;
+use App\Service\Option\OptionPictureService;
+use App\Service\Option\OptionService;
 use App\Service\S3Service;
-use App\Service\Video\VideoPictureService;
-use App\Service\Video\VideoService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,49 +28,48 @@ class OptionsController extends AbstractController
     private const string PAGE_SLUG = 'options';
 
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(VideoRepository $videoRepository): Response
+    public function index(OptionRepository $optionRepository): Response
     {
         return $this->render('admin/options/index.html.twig', [
-            'videos' => $videoRepository->findAllOrderedByPageSlug(self::PAGE_SLUG),
-            'videoCount' => $videoRepository->countByPageSlug(self::PAGE_SLUG),
+            'options' => $optionRepository->findAllOrdered(),
+            'optionCount' => $optionRepository->countAll(),
         ]);
     }
 
     #[Route('/create', name: 'create', methods: ['GET'])]
     public function create(): Response
     {
-        $form = $this->createForm(VideoType::class, new Video());
+        $form = $this->createForm(OptionType::class, new Option());
 
         return $this->render('admin/options/create.html.twig', [
             'form' => $form,
-            'maxPictures' => VideoPictureService::MAX_PICTURES_PER_VIDEO,
+            'maxPictures' => OptionPictureService::MAX_PICTURES_PER_OPTION,
         ]);
     }
 
     #[Route('/{id}/update', name: 'update', methods: ['GET'])]
     public function update(
-        Video $video,
-        VideoService $videoService,
-        VideoPictureRepository $videoPictureRepository,
+        Option $option,
+        OptionService $optionService,
+        OptionPictureRepository $optionPictureRepository,
         S3Service $s3Service,
     ): Response {
-        $form = $this->createForm(VideoType::class, $video);
-        $videoPictures = $videoPictureRepository->findByVideoOrdered($video);
+        $form = $this->createForm(OptionType::class, $option);
 
-        $videoPictures = array_map(
-            fn ($videoPicture) => [
-                'id' => $videoPicture->getId(),
-                'thumbnailUrl' => $s3Service->getPublicUrl($videoPicture->getThumbnailPath()),
+        $optionPictures = array_map(
+            fn ($picture) => [
+                'id' => $picture->getId(),
+                'thumbnailUrl' => $s3Service->getPublicUrl($picture->getThumbnailPath()),
             ],
-            $videoPictures
+            $optionPictureRepository->findByOptionOrdered($option),
         );
 
         return $this->render('admin/options/update.html.twig', [
-            'video' => $video,
+            'option' => $option,
             'form' => $form,
-            'front_video_url' => $videoService->generatePublicUrl($video),
-            'videoPictures' => $videoPictures,
-            'maxPictures' => VideoPictureService::MAX_PICTURES_PER_VIDEO,
+            'front_option_url' => $optionService->generatePublicUrl($option),
+            'optionPictures' => $optionPictures,
+            'maxPictures' => OptionPictureService::MAX_PICTURES_PER_OPTION,
         ]);
     }
 
@@ -78,7 +77,7 @@ class OptionsController extends AbstractController
     public function createStub(
         Request $request,
         EntityManagerInterface $entityManager,
-        VideoRepository $videoRepository,
+        OptionRepository $optionRepository,
         PageRepository $pageRepository,
         JsonFormHandler $formHandler,
     ): JsonResponse {
@@ -90,35 +89,35 @@ class OptionsController extends AbstractController
             );
         }
 
-        $video = new Video();
-        $form = $this->createForm(VideoType::class, $video);
+        $option = new Option();
+        $form = $this->createForm(OptionType::class, $option);
 
         if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
             return $errorResponse;
         }
 
-        $video->setPage($page);
-        $video->setPosition($videoRepository->getNextPosition());
+        $option->setPage($page);
+        $option->setPosition($optionRepository->getNextPosition());
 
-        $entityManager->persist($video);
+        $entityManager->persist($option);
         $entityManager->flush();
 
-        $this->addFlash('success', 'Vidéo ajoutée avec succès.');
+        $this->addFlash('success', 'Option ajoutée avec succès.');
 
         return $this->json([
-            'id' => $video->getId(),
-            'redirectUrl' => $this->generateUrl('app_admin_options_update', ['id' => $video->getId()]),
+            'id' => $option->getId(),
+            'redirectUrl' => $this->generateUrl('app_admin_options_update', ['id' => $option->getId()]),
         ]);
     }
 
     #[Route('/{id}/update-stub', name: 'update_stub', methods: ['POST'])]
     public function updateStub(
         Request $request,
-        Video $video,
+        Option $option,
         EntityManagerInterface $entityManager,
         JsonFormHandler $formHandler,
     ): JsonResponse {
-        $form = $this->createForm(VideoType::class, $video);
+        $form = $this->createForm(OptionType::class, $option);
 
         if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
             return $errorResponse;
@@ -126,42 +125,42 @@ class OptionsController extends AbstractController
 
         $entityManager->flush();
 
-        $this->addFlash('success', 'Vidéo modifiée avec succès.');
+        $this->addFlash('success', 'Option modifiée avec succès.');
 
         return $this->json([
-            'id' => $video->getId(),
+            'id' => $option->getId(),
             'redirectUrl' => $this->generateUrl('app_admin_options_index'),
         ]);
     }
 
     #[Route('/{id}/token', name: 'token', methods: ['POST'])]
     public function resetToken(
-        Video $video,
+        Option $option,
         EntityManagerInterface $entityManager,
-        VideoService $videoService,
+        OptionService $optionService,
     ): Response {
-        $video->resetToken();
+        $option->resetToken();
         $entityManager->flush();
 
         return $this->json([
             'success' => true,
-            'url' => $videoService->generatePublicUrl($video),
+            'url' => $optionService->generatePublicUrl($option),
         ]);
     }
 
     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
     public function delete(
         Request $request,
-        Video $video,
+        Option $option,
         EntityManagerInterface $entityManager,
-        VideoPictureService $videoPictureService,
+        OptionPictureService $optionPictureService,
     ): Response {
-        if ($this->isCsrfTokenValid('delete' . $video->getId(), $request->request->get('_token'))) {
-            $videoPictureService->cleanupFilesForVideo($video);
-            $entityManager->remove($video);
+        if ($this->isCsrfTokenValid('delete' . $option->getId(), $request->request->get('_token'))) {
+            $optionPictureService->cleanupFilesForOption($option);
+            $entityManager->remove($option);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Vidéo supprimée avec succès.');
+            $this->addFlash('success', 'Option supprimée avec succès.');
         }
 
         return $this->redirectToRoute('app_admin_options_index');
@@ -170,11 +169,11 @@ class OptionsController extends AbstractController
     #[Route('/{id}/toggle', name: 'toggle', methods: ['POST'])]
     public function toggle(
         Request $request,
-        Video $video,
+        Option $option,
         EntityManagerInterface $entityManager,
     ): Response {
-        if ($this->isCsrfTokenValid('toggle' . $video->getId(), $request->request->get('_token'))) {
-            $video->setActive(!$video->isActive());
+        if ($this->isCsrfTokenValid('toggle' . $option->getId(), $request->request->get('_token'))) {
+            $option->setActive(!$option->isActive());
             $entityManager->flush();
         }
 
@@ -184,7 +183,7 @@ class OptionsController extends AbstractController
     #[Route('/reorder', name: 'reorder', methods: ['POST'])]
     public function reorder(
         Request $request,
-        VideoRepository $videoRepository,
+        OptionRepository $optionRepository,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
         try {
@@ -194,10 +193,10 @@ class OptionsController extends AbstractController
                 throw new InvalidArgumentException('Invalid input data, expected array.');
             }
 
-            $videos = $videoRepository->findBy(['id' => $ids]);
+            $options = $optionRepository->findBy(['id' => $ids]);
             $indexed = [];
-            foreach ($videos as $video) {
-                $indexed[$video->getId()] = $video;
+            foreach ($options as $option) {
+                $indexed[$option->getId()] = $option;
             }
 
             foreach ($ids as $position => $id) {

@@ -1,8 +1,8 @@
 {% extends 'admin/admin_layout.html.twig' %}
 
-{% block title %}Modifier {{ video.title ?: 'la vidéo' }} - {{ parent() }}{% endblock %}
+{% block title %}Modifier {{ team.title ?: 'la team' }} - {{ parent() }}{% endblock %}
 
-{% block page_title %}Modifier la vidéo (Team){% endblock %}
+{% block page_title %}Modifier la Team{% endblock %}
 
 {% block javascripts %}
     <script src="{{ asset('build/ckeditor/ckeditor.js') }}"></script>
@@ -21,7 +21,7 @@
             <h2 class="text-lg font-semibold text-white mb-4">Lien</h2>
             <div class="flex flex-col sm:flex-row gap-2">
                 <div class="flex-1 px-3 py-2 sm:px-4 sm:py-3 bg-slate-800 border border-slate-600 rounded-lg text-white truncate" id="video-url">
-                    {{ front_video_url }}
+                    {{ front_team_url }}
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <button type="button"
@@ -32,10 +32,10 @@
                         </svg>
                         <span id="copy-url-text">Copier</span>
                     </button>
-                    {% if not video.visibility %}
+                    {% if not team.visibility %}
                         <button type="button"
                                 id="reset-token-btn"
-                                data-url="{{ path('app_admin_team_token', {id: video.id}) }}"
+                                data-url="{{ path('app_admin_team_token', {id: team.id}) }}"
                                 class="grow justify-center px-3 py-2 sm:px-4 sm:py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition flex items-center gap-2"
                                 title="Régénérer le token (invalidera l'ancien lien)">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,7 +49,7 @@
         </div>
 
         {{ form_start(form, {
-            'action': path('app_admin_team_update_stub', {id: video.id}),
+            'action': path('app_admin_team_update_stub', {id: team.id}),
             'attr': {
                 'data-async-form': '',
                 'novalidate': 'novalidate'
@@ -64,13 +64,6 @@
 
             <div class="space-y-6">
                 <div>
-                    {{ form_label(form.url, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
-                    {{ form_widget(form.url, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}}) }}
-                    <p class="text-slate-500 text-xs mt-2">Lien YouTube, Vimeo ou Dailymotion. Provider actuel : <code class="text-slate-400 capitalize">{{ video.provider.label }}</code></p>
-                    {{ form_errors(form.url, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
-                </div>
-
-                <div>
                     {{ form_label(form.title, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
                     {{ form_widget(form.title, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}}) }}
                     {{ form_errors(form.title, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
@@ -82,8 +75,15 @@
                     {{ form_errors(form.description, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
                 </div>
 
+                <div>
+                    {{ form_label(form.url, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
+                    {{ form_widget(form.url, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}}) }}
+                    <p class="text-slate-500 text-xs mt-2">Lien YouTube, Vimeo ou Dailymotion. Provider actuel : <code class="text-slate-400 capitalize">{{ team.provider.label }}</code></p>
+                    {{ form_errors(form.url, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
+                </div>
+
                 <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium text-slate-300">{{ form_label(form.visibility, 'Vidéo publique', {'label_attr': {'class': 'text-sm font-medium text-slate-300'}}) }}</span>
+                    <span class="text-sm font-medium text-slate-300">{{ form_label(form.visibility, 'Team public', {'label_attr': {'class': 'text-sm font-medium text-slate-300'}}) }}</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         {{ form_widget(form.visibility, {'attr': {'class': 'sr-only peer'}}) }}
                         <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
@@ -103,9 +103,9 @@
         {# Images carousel #}
         <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6"
              data-video-picture-uploader
-             data-upload-url="{{ path('app_admin_api_video_picture_upload', {id: video.id}) }}"
-             data-reorder-url="{{ path('app_admin_api_video_picture_reorder', {id: video.id}) }}"
-             data-delete-url-template="{{ path('app_admin_api_video_picture_delete', {id: '__ID__'}) }}"
+             data-upload-url="{{ path('app_admin_api_team_picture_upload', {id: team.id}) }}"
+             data-reorder-url="{{ path('app_admin_api_team_picture_reorder', {id: team.id}) }}"
+             data-delete-url-template="{{ path('app_admin_api_team_picture_delete', {id: '__ID__'}) }}"
              data-max-pictures="{{ maxPictures }}">
             <div class="flex items-center justify-between mb-4">
                 <div>
@@ -125,10 +125,10 @@
             </div>
 
             <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" data-pictures-grid>
-                {% for picture in videoPictures %}
+                {% for picture in teamPictures %}
                     <div class="relative aspect-square bg-slate-800 border border-slate-700 rounded-lg overflow-hidden group"
                          data-picture-id="{{ picture.id }}"
-                         data-csrf-token="{{ csrf_token('delete_video_picture' ~ picture.id) }}">
+                         data-csrf-token="{{ csrf_token('delete_team_picture' ~ picture.id) }}">
                         <img src="{{ picture.thumbnailUrl }}" alt="" class="w-full h-full object-cover">
                         <button type="button" data-drag-handle title="Déplacer"
                                 class="absolute top-1 left-1 p-1.5 bg-slate-900/70 hover:bg-slate-900 text-white rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition">

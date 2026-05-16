@@ -30,53 +30,11 @@ class VideoRepository extends ServiceEntityRepository
     /**
      * @return Video[]
      */
-    public function findActive(): array
-    {
-        return $this->createQueryBuilder('v')
-            ->where('v.active = true')
-            ->orderBy('v.position', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return Video[]
-     */
     public function findPublicActive(): array
     {
         return $this->createQueryBuilder('v')
             ->where('v.active = true')
             ->andWhere('v.visibility = true')
-            ->orderBy('v.position', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return Video[]
-     */
-    public function findAllOrderedByPageSlug(string $slug): array
-    {
-        return $this->createQueryBuilder('v')
-            ->innerJoin('v.page', 'p')
-            ->where('p.slug = :slug')
-            ->setParameter('slug', $slug)
-            ->orderBy('v.position', 'ASC')
-            ->getQuery()
-            ->getResult();
-    }
-
-    /**
-     * @return Video[]
-     */
-    public function findPublicActiveByPageSlug(string $slug): array
-    {
-        return $this->createQueryBuilder('v')
-            ->innerJoin('v.page', 'p')
-            ->where('p.slug = :slug')
-            ->andWhere('v.active = true')
-            ->andWhere('v.visibility = true')
-            ->setParameter('slug', $slug)
             ->orderBy('v.position', 'ASC')
             ->getQuery()
             ->getResult();
@@ -96,17 +54,6 @@ class VideoRepository extends ServiceEntityRepository
     {
         return (int) $this->createQueryBuilder('v')
             ->select('COUNT(v.id)')
-            ->getQuery()
-            ->getSingleScalarResult();
-    }
-
-    public function countByPageSlug(string $slug): int
-    {
-        return (int) $this->createQueryBuilder('v')
-            ->select('COUNT(v.id)')
-            ->innerJoin('v.page', 'p')
-            ->where('p.slug = :slug')
-            ->setParameter('slug', $slug)
             ->getQuery()
             ->getSingleScalarResult();
     }

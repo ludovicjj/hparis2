@@ -112,6 +112,92 @@ class S3Service
     }
 
     /**
+     * Batch-delete a list of keys via the DeleteObjects API. Chunks the list
+     * in groups of 1000 (the S3 hard limit per call). Returns the number of
+     * objects S3 reported as successfully deleted.
+     *
+     * @param string[] $keys
+     */
+    public function deleteFiles(array $keys): int
+    {
+        if (empty($keys)) {
+            return 0;
+        }
+
+        $deleted = 0;
+        foreach (array_chunk($keys, 1000) as $chunk) {
+            $objects = array_map(fn(string $key) => ['Key' => $key], $chunk);
+            $deleted += $this->doDeleteObjects($objects);
+        }
+
+        return $deleted;
+    }
+
+    /**
+     * List every object under a prefix and batch-delete them. Pages through
+     * ListObjectsV2 (1000 keys per page) until exhausted. Useful to purge
+     * everything that belongs to a single owner (e.g. a gallery).
+     */
+    public function deleteFilesByPrefix(string $prefix): int
+    {
+        $deleted = 0;
+        $continuationToken = null;
+
+        do {
+            $listArgs = [
+                'Bucket' => $this->bucket,
+                'Prefix' => $prefix,
+                'MaxKeys' => 1000,
+            ];
+            if ($continuationToken !== null) {
+                $listArgs['ContinuationToken'] = $continuationToken;
+            }
+
+            try {
+                $listResult = $this->client->listObjectsV2($listArgs);
+            } catch (Exception) {
+                return $deleted;
+            }
+
+            $contents = $listResult['Contents'] ?? [];
+            if (!empty($contents)) {
+                $objects = array_map(fn(array $obj) => ['Key' => $obj['Key']], $contents);
+                $deleted += $this->doDeleteObjects($objects);
+            }
+
+            $continuationToken = ($listResult['IsTruncated'] ?? false)
+                ? ($listResult['NextContinuationToken'] ?? null)
+                : null;
+        } while ($continuationToken !== null);
+
+        return $deleted;
+    }
+
+    /**
+     * @param array<array{Key: string}> $objects
+     */
+    private function doDeleteObjects(array $objects): int
+    {
+        if (empty($objects)) {
+            return 0;
+        }
+
+        try {
+            $result = $this->client->deleteObjects([
+                'Bucket' => $this->bucket,
+                'Delete' => [
+                    'Objects' => $objects,
+                    'Quiet' => true,
+                ],
+            ]);
+
+            return count($objects) - count($result['Errors'] ?? []);
+        } catch (Exception) {
+            return 0;
+        }
+    }
+
+    /**
      * Download an object's content as a binary string.
      */
     public function getFileContent(string $key): string|false

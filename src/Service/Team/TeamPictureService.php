@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Service\Video;
+namespace App\Service\Team;
 
-use App\Entity\Video;
-use App\Entity\VideoPicture;
-use App\Repository\VideoPictureRepository;
+use App\Entity\Team;
+use App\Entity\TeamPicture;
+use App\Repository\TeamPictureRepository;
 use App\Service\ImageOptimizerService;
 use App\Service\S3Service;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,15 +13,16 @@ use RuntimeException;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
-readonly class VideoPictureService
+readonly class TeamPictureService
 {
-    public const int MAX_PICTURES_PER_VIDEO = 5;
+    public const int MAX_PICTURES_PER_TEAM = 5;
 
+    private const string S3_PREFIX = 'team_pictures';
     private const array ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'];
-    private const int MAX_FILE_SIZE = 5 * 1024 * 1024;  // 5 MB
+    private const int MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
     public function __construct(
-        private VideoPictureRepository $repository,
+        private TeamPictureRepository $repository,
         private EntityManagerInterface $entityManager,
         private ImageOptimizerService $imageOptimizer,
         private S3Service $s3Service,
@@ -30,20 +31,18 @@ readonly class VideoPictureService
     }
 
     /**
-     * Synchronous upload : validate file, generate the two resized variants
-     * (1200px + 400px), upload both to S3, persist the VideoPicture row.
-     *
-     * Throws on any error. If the upload partially succeeded (lightbox uploaded
-     * but thumbnail failed), the lightbox S3 object is cleaned up before throwing.
+     * Synchronous upload: validate file, generate the two resized variants
+     * (1200px + 400px), upload both to S3, persist the TeamPicture row.
+     * Rolls back the lightbox object if the thumbnail upload fails.
      */
-    public function upload(Video $video, UploadedFile $file): VideoPicture
+    public function upload(Team $team, UploadedFile $file): TeamPicture
     {
-        if ($video->getId() === null) {
-            throw new RuntimeException('Video must be persisted before uploading pictures.');
+        if ($team->getId() === null) {
+            throw new RuntimeException('Team must be persisted before uploading pictures.');
         }
 
-        if ($this->repository->countByVideo($video) >= self::MAX_PICTURES_PER_VIDEO) {
-            throw new RuntimeException(sprintf('Limite atteinte : %d images max par vidéo.', self::MAX_PICTURES_PER_VIDEO));
+        if ($this->repository->countByTeam($team) >= self::MAX_PICTURES_PER_TEAM) {
+            throw new RuntimeException(sprintf('Limite atteinte : %d images max.', self::MAX_PICTURES_PER_TEAM));
         }
 
         if (!in_array($file->getMimeType(), self::ALLOWED_MIME_TYPES, true)) {
@@ -61,7 +60,7 @@ readonly class VideoPictureService
 
         $variants = $this->imageOptimizer->optimizePicture($sourceContent);
 
-        $base = sprintf('video_pictures/%d/%s', $video->getId(), uniqid());
+        $base = sprintf('%s/%d/%s', self::S3_PREFIX, $team->getId(), uniqid());
         $lightboxKey = $base . '.jpg';
         $thumbnailKey = $base . '-thumb.jpg';
 
@@ -74,56 +73,57 @@ readonly class VideoPictureService
             throw new RuntimeException('Échec de l\'upload S3 (thumbnail).');
         }
 
-        $videoPicture = new VideoPicture()
-            ->setVideo($video)
+        $picture = new TeamPicture()
+            ->setTeam($team)
             ->setLightboxPath($lightboxKey)
             ->setThumbnailPath($thumbnailKey)
-            ->setPosition($this->repository->getNextPositionByVideo($video))
+            ->setPosition($this->repository->getNextPositionByTeam($team))
             ->setCreatedBy($this->security->getUser());
 
-        $this->entityManager->persist($videoPicture);
+        $this->entityManager->persist($picture);
         $this->entityManager->flush();
 
-        return $videoPicture;
+        return $picture;
     }
 
     /**
-     * Delete a VideoPicture entity and both associated S3 objects.
+     * Delete a TeamPicture entity and both associated S3 objects.
      */
-    public function delete(VideoPicture $videoPicture): void
+    public function delete(TeamPicture $picture): void
     {
-        $this->s3Service->deleteFile($videoPicture->getLightboxPath());
-        $this->s3Service->deleteFile($videoPicture->getThumbnailPath());
+        $this->s3Service->deleteFile($picture->getLightboxPath());
+        $this->s3Service->deleteFile($picture->getThumbnailPath());
 
-        $this->entityManager->remove($videoPicture);
+        $this->entityManager->remove($picture);
         $this->entityManager->flush();
     }
 
     /**
-     * Delete every S3 file (lightbox + thumbnail) attached to a video's pictures.
-     * Does NOT remove the VideoPicture rows — caller relies on the FK CASCADE
-     * to clean those up when the Video row is removed.
+     * Delete every S3 file (lightbox + thumbnail) attached to a team's pictures.
+     * Does NOT remove the TeamPicture rows — caller relies on the FK CASCADE to
+     * clean those up when the Team row is removed.
      */
-    public function cleanupFilesForVideo(Video $video): void
+    public function cleanupFilesForTeam(Team $team): void
     {
-        $pictures = $this->repository->findByVideoOrdered($video);
-
-        foreach ($pictures as $picture) {
+        foreach ($this->repository->findByTeamOrdered($team) as $picture) {
             $this->s3Service->deleteFile($picture->getLightboxPath());
             $this->s3Service->deleteFile($picture->getThumbnailPath());
         }
     }
 
     /**
-     * Reorder the VideoPicture rows of a video to match the given id sequence.
-     * Ids that don't belong to the video are silently ignored.
+     * Reorder TeamPicture rows of a team to match the given id sequence.
+     * Ids that don't belong to the team are silently ignored.
+     *
+     * @param int[] $ids
      */
-    public function reorder(Video $video, array $ids): void
+    public function reorder(Team $team, array $ids): void
     {
-        $pictures = $this->repository->findBy(['id' => $ids, 'video' => $video]);
+        $pictures = $this->repository->findBy(['id' => $ids, 'team' => $team]);
+
         $indexed = [];
-        foreach ($pictures as $vp) {
-            $indexed[$vp->getId()] = $vp;
+        foreach ($pictures as $picture) {
+            $indexed[$picture->getId()] = $picture;
         }
 
         foreach ($ids as $position => $id) {

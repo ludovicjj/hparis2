@@ -2,7 +2,7 @@
 
 {% block title %}Nouvelle vidéo Team - {{ parent() }}{% endblock %}
 
-{% block page_title %}Nouvelle vidéo (Team){% endblock %}
+{% block page_title %}Nouvelle Team{% endblock %}
 
 {% block javascripts %}
     <script src="{{ asset('build/ckeditor/ckeditor.js') }}"></script>
@@ -21,7 +21,7 @@
             'action': path('app_admin_team_create_stub'),
             'attr': {
                 'data-video-picture-create': '',
-                'data-video-picture-upload-url': path('app_admin_api_video_picture_upload', {id: '__ID__'}),
+                'data-video-picture-upload-url': path('app_admin_api_team_picture_upload', {id: '__ID__'}),
                 'data-final-redirect-url': path('app_admin_team_index'),
                 'data-max-pictures': maxPictures,
                 'novalidate': 'novalidate'
@@ -36,13 +36,6 @@
 
             <div class="space-y-6">
                 <div>
-                    {{ form_label(form.url, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
-                    {{ form_widget(form.url, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}}) }}
-                    <p class="text-slate-500 text-xs mt-2">Lien YouTube, Vimeo ou Dailymotion.</p>
-                    {{ form_errors(form.url, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
-                </div>
-
-                <div>
                     {{ form_label(form.title, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
                     {{ form_widget(form.title, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}}) }}
                     {{ form_errors(form.title, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
@@ -54,8 +47,15 @@
                     {{ form_errors(form.description, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
                 </div>
 
+                <div>
+                    {{ form_label(form.url, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
+                    {{ form_widget(form.url, {'attr': {'class': 'w-full px-4 py-3 bg-slate-800 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition'}}) }}
+                    <p class="text-slate-500 text-xs mt-2">Lien YouTube, Vimeo ou Dailymotion.</p>
+                    {{ form_errors(form.url, {'attr': {'class': 'text-red-400 text-xs mt-1'}}) }}
+                </div>
+
                 <div class="flex items-center gap-4">
-                    <span class="text-sm font-medium text-slate-300">{{ form_label(form.visibility, 'Vidéo publique', {'label_attr': {'class': 'text-sm font-medium text-slate-300'}}) }}</span>
+                    <span class="text-sm font-medium text-slate-300">{{ form_label(form.visibility, 'Team public', {'label_attr': {'class': 'text-sm font-medium text-slate-300'}}) }}</span>
                     <label class="relative inline-flex items-center cursor-pointer">
                         {{ form_widget(form.visibility, {'attr': {'class': 'sr-only peer'}}) }}
                         <div class="w-11 h-6 bg-slate-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-purple-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>

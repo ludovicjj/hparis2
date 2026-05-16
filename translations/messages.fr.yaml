@@ -45,12 +45,14 @@ video:
 team:
     title: Team
     subtitle1: "Découvrez l'équipe d'Hollywood Paris."
+    back: Retour à Team
     empty: "Aucun élément disponible pour le moment"
 
 # Front - options
 options:
     title: Options
     subtitle1: "Découvrez les options proposées par Hollywood Paris."
+    back: Retour aux options
     empty: "Aucune option disponible pour le moment"
 
 # Front - contact

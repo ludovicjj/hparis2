@@ -4,7 +4,6 @@ namespace App\Controller\Admin\Video;
 
 use App\Entity\Video;
 use App\Form\VideoType;
-use App\Repository\PageRepository;
 use App\Repository\VideoRepository;
 use App\Service\Video\VideoService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,14 +20,12 @@ use Throwable;
 #[IsGranted('ROLE_ADMIN')]
 class VideoController extends AbstractController
 {
-    private const string PAGE_SLUG = 'video_index';
-
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(VideoRepository $videoRepository): Response
     {
         return $this->render('admin/video/index.html.twig', [
-            'videos' => $videoRepository->findAllOrderedByPageSlug(self::PAGE_SLUG),
-            'videoCount' => $videoRepository->countByPageSlug(self::PAGE_SLUG),
+            'videos' => $videoRepository->findAllOrdered(),
+            'videoCount' => $videoRepository->countAll(),
         ]);
     }
 
@@ -37,19 +34,12 @@ class VideoController extends AbstractController
         Request $request,
         EntityManagerInterface $entityManager,
         VideoRepository $videoRepository,
-        PageRepository $pageRepository,
     ): Response {
-        $page = $pageRepository->findOneBySlug(self::PAGE_SLUG);
-        if ($page === null) {
-            throw $this->createNotFoundException(sprintf('Page "%s" not seeded. Run app:seed-pages.', self::PAGE_SLUG));
-        }
-
         $video = new Video();
         $form = $this->createForm(VideoType::class, $video);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $video->setPage($page);
             $video->setPosition($videoRepository->getNextPosition());
 
             $entityManager->persist($video);

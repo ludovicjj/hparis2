@@ -52,10 +52,6 @@ class Video
     #[ORM\Column(options: ['default' => 0])]
     private int $position = 0;
 
-    #[ORM\ManyToOne(targetEntity: Page::class)]
-    #[ORM\JoinColumn(name: 'page_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
-    private ?Page $page = null;
-
     #[ORM\Column]
     private DateTimeImmutable $createdAt;
 
@@ -213,18 +209,6 @@ class Video
         } catch (Exception $e) {
             return bin2hex(openssl_random_pseudo_bytes(32));
         }
-    }
-
-    public function getPage(): ?Page
-    {
-        return $this->page;
-    }
-
-    public function setPage(?Page $page): static
-    {
-        $this->page = $page;
-
-        return $this;
     }
 
     public function getCreatedAt(): ?DateTimeImmutable

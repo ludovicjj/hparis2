@@ -2,15 +2,15 @@
 
 namespace App\Controller\Admin\Team;
 
-use App\Entity\Video;
-use App\Form\VideoType;
+use App\Entity\Team;
+use App\Form\TeamType;
 use App\Repository\PageRepository;
-use App\Repository\VideoPictureRepository;
-use App\Repository\VideoRepository;
+use App\Repository\TeamPictureRepository;
+use App\Repository\TeamRepository;
 use App\Service\JsonFormHandler;
 use App\Service\S3Service;
-use App\Service\Video\VideoPictureService;
-use App\Service\Video\VideoService;
+use App\Service\Team\TeamPictureService;
+use App\Service\Team\TeamService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -28,48 +28,48 @@ class TeamController extends AbstractController
     private const string PAGE_SLUG = 'team';
 
     #[Route('', name: 'index', methods: ['GET'])]
-    public function index(VideoRepository $videoRepository): Response
+    public function index(TeamRepository $teamRepository): Response
     {
         return $this->render('admin/team/index.html.twig', [
-            'videos' => $videoRepository->findAllOrderedByPageSlug(self::PAGE_SLUG),
-            'videoCount' => $videoRepository->countByPageSlug(self::PAGE_SLUG),
+            'teams' => $teamRepository->findAllOrdered(),
+            'teamCount' => $teamRepository->countAll(),
         ]);
     }
 
     #[Route('/create', name: 'create', methods: ['GET'])]
     public function create(): Response
     {
-        $form = $this->createForm(VideoType::class, new Video());
+        $form = $this->createForm(TeamType::class, new Team());
 
         return $this->render('admin/team/create.html.twig', [
             'form' => $form,
-            'maxPictures' => VideoPictureService::MAX_PICTURES_PER_VIDEO,
+            'maxPictures' => TeamPictureService::MAX_PICTURES_PER_TEAM,
         ]);
     }
 
     #[Route('/{id}/update', name: 'update', methods: ['GET'])]
     public function update(
-        Video $video,
-        VideoService $videoService,
-        VideoPictureRepository $videoPictureRepository,
+        Team $team,
+        TeamService $teamService,
+        TeamPictureRepository $teamPictureRepository,
         S3Service $s3Service,
     ): Response {
-        $form = $this->createForm(VideoType::class, $video);
+        $form = $this->createForm(TeamType::class, $team);
 
-        $videoPictures = array_map(
-            fn($videoPicture) => [
-                'id' => $videoPicture->getId(),
-                'thumbnailUrl' => $s3Service->getPublicUrl($videoPicture->getThumbnailPath()),
+        $teamPictures = array_map(
+            fn ($picture) => [
+                'id' => $picture->getId(),
+                'thumbnailUrl' => $s3Service->getPublicUrl($picture->getThumbnailPath()),
             ],
-            $videoPictureRepository->findByVideoOrdered($video),
+            $teamPictureRepository->findByTeamOrdered($team),
         );
 
         return $this->render('admin/team/update.html.twig', [
-            'video' => $video,
+            'team' => $team,
             'form' => $form,
-            'front_video_url' => $videoService->generatePublicUrl($video),
-            'videoPictures' => $videoPictures,
-            'maxPictures' => VideoPictureService::MAX_PICTURES_PER_VIDEO,
+            'front_team_url' => $teamService->generatePublicUrl($team),
+            'teamPictures' => $teamPictures,
+            'maxPictures' => TeamPictureService::MAX_PICTURES_PER_TEAM,
         ]);
     }
 
@@ -77,7 +77,7 @@ class TeamController extends AbstractController
     public function createStub(
         Request $request,
         EntityManagerInterface $entityManager,
-        VideoRepository $videoRepository,
+        TeamRepository $teamRepository,
         PageRepository $pageRepository,
         JsonFormHandler $formHandler,
     ): JsonResponse {
@@ -89,35 +89,35 @@ class TeamController extends AbstractController
             );
         }
 
-        $video = new Video();
-        $form = $this->createForm(VideoType::class, $video);
+        $team = new Team();
+        $form = $this->createForm(TeamType::class, $team);
 
         if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
             return $errorResponse;
         }
 
-        $video->setPage($page);
-        $video->setPosition($videoRepository->getNextPosition());
+        $team->setPage($page);
+        $team->setPosition($teamRepository->getNextPosition());
 
-        $entityManager->persist($video);
+        $entityManager->persist($team);
         $entityManager->flush();
 
-        $this->addFlash('success', 'Vidéo ajoutée avec succès.');
+        $this->addFlash('success', 'Team ajoutée avec succès.');
 
         return $this->json([
-            'id' => $video->getId(),
-            'redirectUrl' => $this->generateUrl('app_admin_team_update', ['id' => $video->getId()]),
+            'id' => $team->getId(),
+            'redirectUrl' => $this->generateUrl('app_admin_team_update', ['id' => $team->getId()]),
         ]);
     }
 
     #[Route('/{id}/update-stub', name: 'update_stub', methods: ['POST'])]
     public function updateStub(
         Request $request,
-        Video $video,
+        Team $team,
         EntityManagerInterface $entityManager,
         JsonFormHandler $formHandler,
     ): JsonResponse {
-        $form = $this->createForm(VideoType::class, $video);
+        $form = $this->createForm(TeamType::class, $team);
 
         if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
             return $errorResponse;
@@ -125,42 +125,42 @@ class TeamController extends AbstractController
 
         $entityManager->flush();
 
-        $this->addFlash('success', 'Vidéo modifiée avec succès.');
+        $this->addFlash('success', 'Team modifiée avec succès.');
 
         return $this->json([
-            'id' => $video->getId(),
+            'id' => $team->getId(),
             'redirectUrl' => $this->generateUrl('app_admin_team_index'),
         ]);
     }
 
     #[Route('/{id}/token', name: 'token', methods: ['POST'])]
     public function resetToken(
-        Video $video,
+        Team $team,
         EntityManagerInterface $entityManager,
-        VideoService $videoService,
+        TeamService $teamService,
     ): Response {
-        $video->resetToken();
+        $team->resetToken();
         $entityManager->flush();
 
         return $this->json([
             'success' => true,
-            'url' => $videoService->generatePublicUrl($video),
+            'url' => $teamService->generatePublicUrl($team),
         ]);
     }
 
     #[Route('/{id}/delete', name: 'delete', methods: ['POST'])]
     public function delete(
         Request $request,
-        Video $video,
+        Team $team,
         EntityManagerInterface $entityManager,
-        VideoPictureService $videoPictureService,
+        TeamPictureService $teamPictureService,
     ): Response {
-        if ($this->isCsrfTokenValid('delete' . $video->getId(), $request->request->get('_token'))) {
-            $videoPictureService->cleanupFilesForVideo($video);
-            $entityManager->remove($video);
+        if ($this->isCsrfTokenValid('delete' . $team->getId(), $request->request->get('_token'))) {
+            $teamPictureService->cleanupFilesForTeam($team);
+            $entityManager->remove($team);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Vidéo supprimée avec succès.');
+            $this->addFlash('success', 'Team supprimée avec succès.');
         }
 
         return $this->redirectToRoute('app_admin_team_index');
@@ -169,11 +169,11 @@ class TeamController extends AbstractController
     #[Route('/{id}/toggle', name: 'toggle', methods: ['POST'])]
     public function toggle(
         Request $request,
-        Video $video,
+        Team $team,
         EntityManagerInterface $entityManager,
     ): Response {
-        if ($this->isCsrfTokenValid('toggle' . $video->getId(), $request->request->get('_token'))) {
-            $video->setActive(!$video->isActive());
+        if ($this->isCsrfTokenValid('toggle' . $team->getId(), $request->request->get('_token'))) {
+            $team->setActive(!$team->isActive());
             $entityManager->flush();
         }
 
@@ -183,7 +183,7 @@ class TeamController extends AbstractController
     #[Route('/reorder', name: 'reorder', methods: ['POST'])]
     public function reorder(
         Request $request,
-        VideoRepository $videoRepository,
+        TeamRepository $teamRepository,
         EntityManagerInterface $entityManager,
     ): JsonResponse {
         try {
@@ -193,10 +193,10 @@ class TeamController extends AbstractController
                 throw new InvalidArgumentException('Invalid input data, expected array.');
             }
 
-            $videos = $videoRepository->findBy(['id' => $ids]);
+            $teams = $teamRepository->findBy(['id' => $ids]);
             $indexed = [];
-            foreach ($videos as $video) {
-                $indexed[$video->getId()] = $video;
+            foreach ($teams as $team) {
+                $indexed[$team->getId()] = $team;
             }
 
             foreach ($ids as $position => $id) {
