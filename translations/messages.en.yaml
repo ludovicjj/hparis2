@@ -3,6 +3,8 @@ nav:
     home: Home
     galleries: Galleries
     videos: Videos
+    team: Team
+    options: Options
     contact: Contact
 
 # Front - home
@@ -31,6 +33,18 @@ video:
     subtitle2: Additional photos & videos available privately
     back: Back to videos
     empty: "No videos available at the moment"
+
+# Front - team
+team:
+    title: Team
+    subtitle1: Meet the Hollywood Paris team.
+    empty: "No items available at the moment"
+
+# Front - options
+options:
+    title: Options
+    subtitle1: Explore the options offered by Hollywood Paris.
+    empty: "No options available at the moment"
 
 # Front - contact
 contact:

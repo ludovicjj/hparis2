@@ -1,18 +1,18 @@
 {% extends 'admin/admin_layout.html.twig' %}
 
-{% block title %}Nouvelle vidéo - {{ parent() }}{% endblock %}
+{% block title %}Nouvelle vidéo Options - {{ parent() }}{% endblock %}
 
-{% block page_title %}Nouvelle vidéo{% endblock %}
+{% block page_title %}Nouvelle vidéo (Options){% endblock %}
 
 {% block javascripts %}
     <script src="{{ asset('build/ckeditor/ckeditor.js') }}"></script>
     {{ parent() }}
-    {{ encore_entry_script_tags('admin_video_form') }}
+    {{ encore_entry_script_tags('admin_options_form') }}
 {% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
-    {{ encore_entry_link_tags('admin_video_form') }}
+    {{ encore_entry_link_tags('admin_options_form') }}
 {% endblock %}
 
 {% block content %}
@@ -20,10 +20,11 @@
         {{ form_start(form) }}
         <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6">
             <div class="mb-6">
-                <a href="{{ path('app_admin_video_index') }}" class="text-purple-400 hover:text-purple-300 transition">
-                    &larr; Retour aux vidéos
+                <a href="{{ path('app_admin_options_index') }}" class="text-purple-400 hover:text-purple-300 transition">
+                    &larr; Retour à Options
                 </a>
             </div>
+
             <div class="space-y-6">
                 <div>
                     {{ form_label(form.url, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}

@@ -3,12 +3,15 @@
 namespace App\Controller\Admin\Setting;
 
 use App\Entity\SocialLink;
+use App\Enum\BrandSetting;
 use App\Enum\MediaSetting;
+use App\Form\BrandSettingsType;
 use App\Form\FaviconType;
 use App\Form\HeroType;
 use App\Form\LogoType;
 use App\Form\SocialLinkType;
 use App\Repository\SocialLinkRepository;
+use App\Service\Setting\BrandSettingService;
 use App\Service\Setting\MediaSettingService;
 use Doctrine\ORM\EntityManagerInterface;
 use InvalidArgumentException;
@@ -23,8 +26,11 @@ use Throwable;
 class SettingsController extends AbstractController
 {
     #[Route('', name: '', methods: ['GET'])]
-    public function index(SocialLinkRepository $repository, MediaSettingService $mediaSettingService): Response
-    {
+    public function index(
+        SocialLinkRepository $repository,
+        MediaSettingService $mediaSettingService,
+        BrandSettingService $brandSettingService,
+    ): Response {
         $logoForm = $this->createForm(LogoType::class, null, [
             'action' => $this->generateUrl('app_admin_settings_logo_update'),
         ]);
@@ -37,6 +43,13 @@ class SettingsController extends AbstractController
             'action' => $this->generateUrl('app_admin_settings_favicon_update'),
         ]);
 
+        $brandForm = $this->createForm(BrandSettingsType::class, [
+            'siteName' => $brandSettingService->get(BrandSetting::SITE_NAME),
+            'gscToken' => $brandSettingService->get(BrandSetting::GSC_TOKEN),
+        ], [
+            'action' => $this->generateUrl('app_admin_settings_brand_update'),
+        ]);
+
         return $this->render('admin/settings/index.html.twig', [
             'socialLinks' => $repository->findAllOrdered(),
             'logoForm' => $logoForm,
@@ -45,7 +58,31 @@ class SettingsController extends AbstractController
             'heroUrl' => $mediaSettingService->getPublicUrl(MediaSetting::HERO),
             'faviconForm' => $faviconForm,
             'faviconUrl' => $mediaSettingService->getPublicUrl(MediaSetting::FAVICON),
+            'brandForm' => $brandForm,
         ]);
+    }
+
+    #[Route('/brand', name: '_brand_update', methods: ['POST'])]
+    public function updateBrand(Request $request, BrandSettingService $brandSettingService): Response
+    {
+        $form = $this->createForm(BrandSettingsType::class)->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $data = $form->getData();
+                $brandSettingService->save(BrandSetting::SITE_NAME, $data['siteName'] ?? null);
+                $brandSettingService->save(BrandSetting::GSC_TOKEN, $data['gscToken'] ?? null);
+                $this->addFlash('success', 'Paramètres du site mis à jour.');
+            } catch (Throwable $e) {
+                $this->addFlash('error', 'Erreur lors de la mise à jour : ' . $e->getMessage());
+            }
+        } else {
+            foreach ($form->getErrors(true) as $error) {
+                $this->addFlash('error', $error->getMessage());
+            }
+        }
+
+        return $this->redirectToRoute('app_admin_settings');
     }
 
     #[Route('/logo', name: '_logo_update', methods: ['POST'])]

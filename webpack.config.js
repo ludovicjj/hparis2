@@ -27,11 +27,17 @@ Encore
     .addEntry('admin_category', './assets/js/admin/category.js')
     .addEntry('admin_video', './assets/js/admin/video.js')
     .addEntry('admin_video_form', './assets/js/admin/video-form.js')
+    .addEntry('admin_team', './assets/js/admin/team.js')
+    .addEntry('admin_team_form', './assets/js/admin/team-form.js')
+    .addEntry('admin_options', './assets/js/admin/options.js')
+    .addEntry('admin_options_form', './assets/js/admin/options-form.js')
     .addEntry('front_app', './assets/js/front/app.js')
     .addEntry('front_gallery_index', './assets/js/front/gallery-index.js')
     .addEntry('front_gallery_show', './assets/js/front/gallery-show.js')
     .addEntry('front_contact', './assets/js/front/contact.js')
     .addEntry('front_video_index', './assets/js/front/video-index.js')
+    .addEntry('front_team_index', './assets/js/front/team-index.js')
+    .addEntry('front_options_index', './assets/js/front/options-index.js')
 
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()

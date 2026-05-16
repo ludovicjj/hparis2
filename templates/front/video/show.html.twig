@@ -1,8 +1,8 @@
 {% extends 'front/base_front.html.twig' %}
 
-{% block title %}{{ video.title ?: 'Vidéo' }} | Hollywood Paris{% endblock %}
+{% block title %}{{ page_meta_title('video_show') }}{% endblock %}
 
-{% block meta_description %}{{ video.description ?: (video.title ? video.title ~ ' — Vidéo par Hollywood Paris.' : 'Vidéo par Hollywood Paris.') }}{% endblock %}
+{% block meta_description %}{{ page_meta_description('video_show') }}{% endblock %}
 
 {% block meta_robots -%}
     {%- if video.visibility -%}

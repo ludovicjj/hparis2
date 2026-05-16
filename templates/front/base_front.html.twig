@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="AK9djmjcdRxnrfyszsVuCAZdnirWV9ajlY9we1vqOh8">
-    <title>{% block title %}Hollywood Paris{% endblock %}</title>
+    {% if gsc_token() %}<meta name="google-site-verification" content="{{ gsc_token() }}">{% endif %}
+    <title>{% block title %}{% endblock %}</title>
 
-    <meta name="description" content="{% block meta_description %}Hollywood Paris — Studio photo professionnel à Paris. Mariages, événements, mode, corporate. Découvrez nos galeries.{% endblock %}">
+    <meta name="description" content="{% block meta_description %}{% endblock %}">
     <meta name="robots" content="{% block meta_robots %}index, follow{% endblock %}">
     <link rel="canonical" href="{% block canonical %}{{ app.request.schemeAndHttpHost ~ app.request.pathInfo }}{% endblock %}">
 
-    <meta property="og:site_name" content="Hollywood Paris">
+    <meta property="og:site_name" content="{{ site_name() }}">
     <meta property="og:type" content="{% block og_type %}website{% endblock %}">
     <meta property="og:title" content="{{ block('title') }}">
     <meta property="og:description" content="{{ block('meta_description') }}">
     <meta property="og:url" content="{{ block('canonical') }}">
-    <meta property="og:locale" content="fr_FR">
+    <meta property="og:locale" content="{{ app.request.locale == 'en' ? 'en_US' : 'fr_FR' }}">
     {% block og_image %}{% endblock %}
 
     <meta name="twitter:card" content="summary_large_image">

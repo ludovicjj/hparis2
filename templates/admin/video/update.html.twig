@@ -50,6 +50,11 @@
 
         {{ form_start(form) }}
         <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6">
+            <div class="mb-6">
+                <a href="{{ path('app_admin_video_index') }}" class="text-purple-400 hover:text-purple-300 transition">
+                    &larr; Retour aux vidéos
+                </a>
+            </div>
             <div class="space-y-6">
                 <div>
                     {{ form_label(form.url, null, {'label_attr': {'class': 'block text-sm font-medium text-slate-300 mb-2'}}) }}
@@ -79,10 +84,7 @@
                 </div>
             </div>
 
-            <div class="flex items-center justify-between pt-6">
-                <a href="{{ path('app_admin_video_index') }}" class="text-slate-400 hover:text-white transition">
-                    &larr; Retour aux vidéos
-                </a>
+            <div class="flex items-center justify-end pt-6">
                 <button type="submit"
                         class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition">
                     Enregistrer

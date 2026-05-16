@@ -10,6 +10,8 @@ nav:
     home: Accueil
     galleries: Galeries
     videos: Vidéos
+    team: Team
+    options: Options
     contact: Contact
 
 # Front - home
@@ -38,6 +40,18 @@ video:
     subtitle2: Photos & Vidéos supplémentaires disponibles en Privé
     back: Retour aux vidéos
     empty: "Aucune vidéo disponible pour le moment"
+
+# Front - team
+team:
+    title: Team
+    subtitle1: "Découvrez l'équipe d'Hollywood Paris."
+    empty: "Aucun élément disponible pour le moment"
+
+# Front - options
+options:
+    title: Options
+    subtitle1: "Découvrez les options proposées par Hollywood Paris."
+    empty: "Aucune option disponible pour le moment"
 
 # Front - contact
 contact:

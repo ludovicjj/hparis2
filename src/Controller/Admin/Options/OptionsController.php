@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\Admin\Video;
+namespace App\Controller\Admin\Options;
 
 use App\Entity\Video;
 use App\Form\VideoType;
@@ -17,16 +17,16 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Throwable;
 
-#[Route('/admin/video', name: 'app_admin_video_')]
+#[Route('/admin/options', name: 'app_admin_options_')]
 #[IsGranted('ROLE_ADMIN')]
-class VideoController extends AbstractController
+class OptionsController extends AbstractController
 {
-    private const string PAGE_SLUG = 'video_index';
+    private const string PAGE_SLUG = 'options';
 
     #[Route('', name: 'index', methods: ['GET'])]
     public function index(VideoRepository $videoRepository): Response
     {
-        return $this->render('admin/video/index.html.twig', [
+        return $this->render('admin/options/index.html.twig', [
             'videos' => $videoRepository->findAllOrderedByPageSlug(self::PAGE_SLUG),
             'videoCount' => $videoRepository->countByPageSlug(self::PAGE_SLUG),
         ]);
@@ -57,10 +57,10 @@ class VideoController extends AbstractController
 
             $this->addFlash('success', 'Vidéo ajoutée avec succès.');
 
-            return $this->redirectToRoute('app_admin_video_index');
+            return $this->redirectToRoute('app_admin_options_index');
         }
 
-        return $this->render('admin/video/create.html.twig', [
+        return $this->render('admin/options/create.html.twig', [
             'form' => $form,
         ]);
     }
@@ -80,10 +80,10 @@ class VideoController extends AbstractController
 
             $this->addFlash('success', 'Vidéo modifiée avec succès.');
 
-            return $this->redirectToRoute('app_admin_video_index');
+            return $this->redirectToRoute('app_admin_options_index');
         }
 
-        return $this->render('admin/video/update.html.twig', [
+        return $this->render('admin/options/update.html.twig', [
             'video' => $video,
             'form' => $form,
             'front_video_url' => $videoService->generatePublicUrl($video),
@@ -118,7 +118,7 @@ class VideoController extends AbstractController
             $this->addFlash('success', 'Vidéo supprimée avec succès.');
         }
 
-        return $this->redirectToRoute('app_admin_video_index');
+        return $this->redirectToRoute('app_admin_options_index');
     }
 
     #[Route('/{id}/toggle', name: 'toggle', methods: ['POST'])]
@@ -132,7 +132,7 @@ class VideoController extends AbstractController
             $entityManager->flush();
         }
 
-        return $this->redirectToRoute('app_admin_video_index');
+        return $this->redirectToRoute('app_admin_options_index');
     }
 
     #[Route('/reorder', name: 'reorder', methods: ['POST'])]

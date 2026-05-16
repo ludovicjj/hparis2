@@ -12,10 +12,12 @@
                 </a>
             </div>
 
-            <div class="hidden md:flex md:col-start-2 space-x-8">
+            <div class="hidden lg:flex lg:col-start-2 space-x-8">
                 <a href="{{ path('app_front_home') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.home'|trans }}</a>
                 <a href="{{ path('app_front_gallery_index') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.galleries'|trans }}</a>
                 <a href="{{ path('app_front_video_index') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.videos'|trans }}</a>
+                <a href="{{ path('app_front_team_index') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.team'|trans }}</a>
+                <a href="{{ path('app_front_options_index') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.options'|trans }}</a>
                 <a href="{{ path('app_front_contact') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.contact'|trans }}</a>
             </div>
 
@@ -23,7 +25,7 @@
             {% set otherLocale = currentLocale == 'fr' ? 'en' : 'fr' %}
             {% set switchLabel = otherLocale == 'en' ? 'Switch to English' : 'Passer en français' %}
 
-            <div class="hidden md:flex col-start-3 justify-self-end">
+            <div class="hidden lg:flex col-start-3 justify-self-end">
                 <form method="post" action="{{ path('app_locale_switch', {locale: otherLocale}) }}">
                     <input type="hidden" name="_token" value="{{ csrf_token('locale_switch') }}">
                     <button type="submit"
@@ -36,7 +38,7 @@
             </div>
 
             <button type="button"
-                    class="md:hidden col-start-3 justify-self-end inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
+                    class="lg:hidden col-start-3 justify-self-end inline-flex items-center justify-center p-2 rounded-md text-gray-700 hover:bg-gray-100 focus:outline-none"
                     aria-label="Ouvrir le menu"
                     aria-expanded="false"
                     data-navbar-toggle>
@@ -48,7 +50,7 @@
 
     </div>
 
-    <div class="hidden md:hidden fixed inset-0 z-50 bg-black/60" data-navbar-menu>
+    <div class="hidden lg:hidden fixed inset-0 z-50 bg-black/60" data-navbar-menu>
         <div class="absolute top-0 right-0 h-full w-full bg-white shadow-xl flex flex-col">
             <div class="flex items-center justify-between h-16 px-4 border-b border-gray-200">
                 <span class="text-lg font-bold text-gray-900">Menu</span>
@@ -68,6 +70,10 @@
                 <a href="{{ path('app_front_gallery_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.galleries'|trans }}</a>
                 <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
                 <a href="{{ path('app_front_video_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.videos'|trans }}</a>
+                <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
+                <a href="{{ path('app_front_team_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.team'|trans }}</a>
+                <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
+                <a href="{{ path('app_front_options_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.options'|trans }}</a>
                 <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
                 <a href="{{ path('app_front_contact') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.contact'|trans }}</a>
             </nav>

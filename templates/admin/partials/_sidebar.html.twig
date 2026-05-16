@@ -58,6 +58,36 @@
                 </a>
             </li>
             <li>
+                <a href="{{ path('app_admin_team_index') }}"
+                   title="Team"
+                   class="flex items-center justify-center md:justify-start px-2 md:px-4 py-3 rounded-lg transition
+                {% if app.current_route starts with 'app_admin_team' %}
+                    bg-purple-600 text-white
+                {% else %}
+                    text-slate-300 hover:bg-slate-800 hover:text-white
+                {% endif %}">
+                    <svg class="w-5 h-5 md:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                    <span class="hidden md:inline">Team</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_options_index') }}"
+                   title="Options"
+                   class="flex items-center justify-center md:justify-start px-2 md:px-4 py-3 rounded-lg transition
+                {% if app.current_route starts with 'app_admin_options' %}
+                    bg-purple-600 text-white
+                {% else %}
+                    text-slate-300 hover:bg-slate-800 hover:text-white
+                {% endif %}">
+                    <svg class="w-5 h-5 md:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+                    </svg>
+                    <span class="hidden md:inline">Options</span>
+                </a>
+            </li>
+            <li>
                 <a href="{{ path('app_admin_category_index') }}"
                    title="Catégories"
                    class="flex items-center justify-center md:justify-start px-2 md:px-4 py-3 rounded-lg transition
@@ -85,6 +115,21 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
                     </svg>
                     <span class="hidden md:inline">Utilisateurs</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ path('app_admin_page_index') }}"
+                   title="Pages"
+                   class="flex items-center justify-center md:justify-start px-2 md:px-4 py-3 rounded-lg transition
+                {% if app.current_route starts with 'app_admin_page' %}
+                    bg-purple-600 text-white
+                {% else %}
+                    text-slate-300 hover:bg-slate-800 hover:text-white
+                {% endif %}">
+                    <svg class="w-5 h-5 md:mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <span class="hidden md:inline">Pages</span>
                 </a>
             </li>
             <li>
