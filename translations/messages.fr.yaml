@@ -4,3 +4,59 @@ Description: Description
 "Description (optionnel)": "Description (optionnel)"
 "Gallerie public": "Gallerie public"
 "Image de couverture": "Image de couverture"
+
+# Front - navigation
+nav:
+    home: Accueil
+    galleries: Galeries
+    videos: Vidéos
+    contact: Contact
+
+# Front - home
+home:
+    subtitle1: Votre studio photo au coeur de Paris
+    subtitle2: Événements Pub & Marketing
+    cta_galleries: Voir les galeries
+
+# Front - gallery
+gallery:
+    title: Galeries
+    subtitle: Explorez nos collections de galeries
+    view: Voir
+    back: Retour aux galeries
+    download: Télécharger les photos
+    loading: Chargement...
+    empty: "Aucune galerie disponible pour le moment"
+    empty_in_category: 'Aucune galerie dans la catégorie "%category%"'
+    carousel_prev: Précédent
+    carousel_next: Suivant
+
+# Front - video
+video:
+    title: Vidéos
+    subtitle1: Nous avons à coeur de respecter la confidentialité de chacun.
+    subtitle2: Photos & Vidéos supplémentaires disponibles en Privé
+    back: Retour aux vidéos
+    empty: "Aucune vidéo disponible pour le moment"
+
+# Front - contact
+contact:
+    title: Contact
+    subtitle: "Une question, un projet ? Écrivez-nous."
+    send: Envoyer
+    form:
+        email_label: "Email *"
+        email_placeholder: "votre.email@exemple.com"
+        subject_label: "Sujet *"
+        subject_placeholder: "Sujet de votre message"
+        message_label: "Message *"
+        message_placeholder: "Votre message..."
+    recaptcha: "Ce site est protégé par reCAPTCHA. Les %privacy_link% et les %terms_link% de Google s'appliquent."
+    recaptcha_privacy: "règles de confidentialité"
+    recaptcha_terms: "conditions d'utilisation"
+    flash_success: "Votre message a bien été envoyé. Nous vous répondrons rapidement."
+    flash_error: "Une erreur est survenue lors de l'envoi de votre message. Veuillez réessayer plus tard."
+
+# Front - footer
+footer:
+    international: "Notre Équipe travaille à l'international"

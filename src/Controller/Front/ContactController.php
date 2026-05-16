@@ -42,12 +42,12 @@ class ContactController extends AbstractController
 
             try {
                 $mailer->send($email);
-                $this->addFlash('success', 'Votre message a bien été envoyé. Nous vous répondrons rapidement.');
+                $this->addFlash('success', 'contact.flash_success');
 
                 return $this->redirectToRoute('app_front_contact');
             } catch (TransportExceptionInterface $e) {
                 $logger->error('Contact form mail failed', ['exception' => $e]);
-                $this->addFlash('error', 'Une erreur est survenue lors de l\'envoi de votre message. Veuillez réessayer plus tard.');
+                $this->addFlash('error', 'contact.flash_error');
             }
         }
 

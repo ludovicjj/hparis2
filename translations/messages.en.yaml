@@ -1,0 +1,55 @@
+# Front - navigation
+nav:
+    home: Home
+    galleries: Galleries
+    videos: Videos
+    contact: Contact
+
+# Front - home
+home:
+    subtitle1: Your photo studio in the heart of Paris
+    subtitle2: Advertising & Marketing Events
+    cta_galleries: View galleries
+
+# Front - gallery
+gallery:
+    title: Galleries
+    subtitle: Explore our gallery collections
+    view: View
+    back: Back to galleries
+    download: Download photos
+    loading: Loading...
+    empty: "No galleries available at the moment"
+    empty_in_category: 'No galleries in the "%category%" category'
+    carousel_prev: Previous
+    carousel_next: Next
+
+# Front - video
+video:
+    title: Videos
+    subtitle1: We are committed to respecting everyone's privacy.
+    subtitle2: Additional photos & videos available privately
+    back: Back to videos
+    empty: "No videos available at the moment"
+
+# Front - contact
+contact:
+    title: Contact
+    subtitle: "A question, a project? Write to us."
+    send: Send
+    form:
+        email_label: "Email *"
+        email_placeholder: "your.email@example.com"
+        subject_label: "Subject *"
+        subject_placeholder: "Subject of your message"
+        message_label: "Message *"
+        message_placeholder: "Your message..."
+    recaptcha: "This site is protected by reCAPTCHA. Google's %privacy_link% and %terms_link% apply."
+    recaptcha_privacy: "Privacy Policy"
+    recaptcha_terms: "Terms of Service"
+    flash_success: "Your message has been sent. We'll get back to you shortly."
+    flash_error: "An error occurred while sending your message. Please try again later."
+
+# Front - footer
+footer:
+    international: "Our team works internationally"

@@ -53,14 +53,14 @@
                     Hollywood Paris
                 </h1>
                 <div class="mt-6 text-sm md:text-lg max-w-[230px] md:max-w-2xl {{ heroUrl ? 'text-gray-100' : 'text-gray-600' }}">
-                    <p>Votre studio photo au coeur de Paris</p>
-                    <p>Événements Pub & Marketing</p>
+                    <p>{{ 'home.subtitle1'|trans }}</p>
+                    <p>{{ 'home.subtitle2'|trans }}</p>
                 </div>
             </div>
             <div class="pb-10 flex justify-center">
                 <a href="{{ path('app_front_gallery_index') }}"
                    class="border {{ heroUrl ? 'border-white/70 text-white hover:bg-white/10' : 'border-gray-400 text-gray-700 hover:bg-gray-50' }} font-semibold px-8 py-3 rounded-lg transition-all">
-                    Voir les galeries
+                    {{ 'home.cta_galleries'|trans }}
                 </a>
             </div>
         </div>

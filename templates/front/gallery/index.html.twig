@@ -32,10 +32,10 @@
     <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             <div class="text-center mb-8">
                 <h1 class="font-['Bodoni_Moda',serif] font-normal uppercase tracking-wider text-5xl md:text-7xl text-gray-900 mb-4">
-                    Galeries
+                    {{ 'gallery.title'|trans }}
                 </h1>
                 <p class="text-sm md:text-lg text-gray-600 max-w-[200px] md:max-w-2xl mx-auto">
-                    Explorez nos collections de galeries
+                    {{ 'gallery.subtitle'|trans }}
                 </p>
             </div>
 
@@ -69,7 +69,7 @@
                         <div class="h-full w-12 flex items-center justify-start bg-gradient-to-r from-white via-white to-transparent pointer-events-auto">
                             <button type="button"
                                     data-carousel-prev
-                                    aria-label="Précédent"
+                                    aria-label="{{ 'gallery.carousel_prev'|trans }}"
                                     disabled
                                     class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -84,7 +84,7 @@
                         <div class="h-full w-12 flex items-center justify-end bg-gradient-to-l from-white via-white to-transparent pointer-events-auto">
                             <button type="button"
                                     data-carousel-next
-                                    aria-label="Suivant"
+                                    aria-label="{{ 'gallery.carousel_next'|trans }}"
                                     disabled
                                     class="block p-1 text-gray-700 hover:text-gray-900 transition disabled:opacity-0 disabled:pointer-events-none">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -103,9 +103,9 @@
                     </svg>
                     <p class="text-gray-500">
                         {% if activeCategory %}
-                            Aucune galerie dans la catégorie « {{ activeCategory.name }} »
+                            {{ 'gallery.empty_in_category'|trans({'%category%': activeCategory.name}) }}
                         {% else %}
-                            Aucune galerie disponible pour le moment
+                            {{ 'gallery.empty'|trans }}
                         {% endif %}
                     </p>
                 </div>
@@ -116,7 +116,8 @@
                      data-api-url="{{ path('app_front_gallery_list') }}"
                      data-category="{{ activeCategory ? activeCategory.slug : '' }}"
                      data-next-offset="{{ nextOffset }}"
-                     data-has-more="{{ hasMore ? 'true' : 'false' }}">
+                     data-has-more="{{ hasMore ? 'true' : 'false' }}"
+                     data-view-label="{{ 'gallery.view'|trans }}">
                     <div class="masonry-sizer w-full sm:w-1/2 lg:w-1/3"></div>
                     {% set showParams = activeCategory ? {category: activeCategory.slug} : {} %}
                     {% for gallery in galleries %}
@@ -141,7 +142,7 @@
                                     {# Mobile: dark overlay always visible, centered title + "Voir" CTA #}
                                     <div class="md:hidden absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
                                         <h3 class="text-white text-base font-semibold">{{ gallery.title }}</h3>
-                                        <span class="mt-4 inline-block border border-white/70 text-white bg-white/10 font-medium text-sm px-6 py-2 rounded-lg transition-all">Voir</span>
+                                        <span class="mt-4 inline-block border border-white/70 text-white bg-white/10 font-medium text-sm px-6 py-2 rounded-lg transition-all">{{ 'gallery.view'|trans }}</span>
                                     </div>
 
                                     {# Desktop: title only on hover (no CTA needed, hover itself is the affordance) #}
@@ -161,7 +162,7 @@
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                             </svg>
-                            <span>Chargement...</span>
+                            <span>{{ 'gallery.loading'|trans }}</span>
                         </div>
                     </div>
                 {% endif %}

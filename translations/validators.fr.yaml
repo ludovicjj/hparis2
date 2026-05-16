@@ -1,0 +1,11 @@
+contact:
+    email:
+        required: "Veuillez renseigner votre email."
+        invalid: "L'email n'est pas valide."
+    subject:
+        required: "Veuillez renseigner un sujet."
+        too_long: "Le sujet ne peut pas dépasser {{ limit }} caractères."
+    message:
+        required: "Veuillez renseigner un message."
+        too_short: "Le message doit faire au moins {{ limit }} caractères."
+        too_long: "Le message ne peut pas dépasser {{ limit }} caractères."

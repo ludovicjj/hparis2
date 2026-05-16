@@ -8,6 +8,7 @@ export class GalleryMasonry {
         this.category = root.dataset.category || null;
         this.nextOffset = parseInt(root.dataset.nextOffset, 10) || 0;
         this.hasMore = root.dataset.hasMore === 'true';
+        this.viewLabel = root.dataset.viewLabel || 'Voir';
         this.isLoading = false;
         this.sentinel = document.getElementById('gallery-sentinel');
 
@@ -92,7 +93,7 @@ export class GalleryMasonry {
                     ${thumbnail}
                     <div class="md:hidden absolute inset-0 bg-black/40 flex flex-col items-center justify-center text-center px-4">
                         <h3 class="text-white text-base font-semibold">${title}</h3>
-                        <span class="mt-4 inline-block border border-white/70 text-white bg-white/10 font-medium text-sm px-6 py-2 rounded-lg transition-all">Voir</span>
+                        <span class="mt-4 inline-block border border-white/70 text-white bg-white/10 font-medium text-sm px-6 py-2 rounded-lg transition-all">${this.viewLabel}</span>
                     </div>
                     <div class="hidden md:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 items-center justify-center text-center px-4">
                         <h3 class="text-white text-xl font-semibold">${title}</h3>

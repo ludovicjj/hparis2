@@ -13,10 +13,26 @@
             </div>
 
             <div class="hidden md:flex md:col-start-2 space-x-8">
-                <a href="{{ path('app_front_home') }}" class="text-gray-600 hover:text-gray-900 transition">Accueil</a>
-                <a href="{{ path('app_front_gallery_index') }}" class="text-gray-600 hover:text-gray-900 transition">Galeries</a>
-                <a href="{{ path('app_front_video_index') }}" class="text-gray-600 hover:text-gray-900 transition">Vidéos</a>
-                <a href="{{ path('app_front_contact') }}" class="text-gray-600 hover:text-gray-900 transition">Contact</a>
+                <a href="{{ path('app_front_home') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.home'|trans }}</a>
+                <a href="{{ path('app_front_gallery_index') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.galleries'|trans }}</a>
+                <a href="{{ path('app_front_video_index') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.videos'|trans }}</a>
+                <a href="{{ path('app_front_contact') }}" class="text-gray-600 hover:text-gray-900 transition">{{ 'nav.contact'|trans }}</a>
+            </div>
+
+            {% set currentLocale = app.request.locale %}
+            {% set otherLocale = currentLocale == 'fr' ? 'en' : 'fr' %}
+            {% set switchLabel = otherLocale == 'en' ? 'Switch to English' : 'Passer en français' %}
+
+            <div class="hidden md:flex col-start-3 justify-self-end">
+                <form method="post" action="{{ path('app_locale_switch', {locale: otherLocale}) }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('locale_switch') }}">
+                    <button type="submit"
+                            class="inline-flex items-center justify-center p-1 rounded hover:opacity-75 transition focus:outline-none cursor-pointer"
+                            aria-label="{{ switchLabel }}"
+                            title="{{ switchLabel }}">
+                        {{ include('partials/icons/flag-' ~ otherLocale ~ '.html.twig', {class: 'w-7 h-5'}) }}
+                    </button>
+                </form>
             </div>
 
             <button type="button"
@@ -47,15 +63,27 @@
                 </button>
             </div>
             <nav class="flex-1 overflow-y-auto px-4 py-8 space-y-6">
-                <a href="{{ path('app_front_home') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Accueil</a>
+                <a href="{{ path('app_front_home') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.home'|trans }}</a>
                 <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
-                <a href="{{ path('app_front_gallery_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Galeries</a>
+                <a href="{{ path('app_front_gallery_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.galleries'|trans }}</a>
                 <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
-                <a href="{{ path('app_front_video_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Vidéos</a>
+                <a href="{{ path('app_front_video_index') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.videos'|trans }}</a>
                 <div class="mx-auto w-[5%] h-px bg-gray-300"></div>
-                <a href="{{ path('app_front_contact') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">Contact</a>
+                <a href="{{ path('app_front_contact') }}" class="block px-3 py-3 rounded text-center text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition">{{ 'nav.contact'|trans }}</a>
             </nav>
             <div class="px-4 py-4 border-t border-gray-200 space-y-4">
+                <div class="flex items-center justify-center">
+                    <form method="post" action="{{ path('app_locale_switch', {locale: otherLocale}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('locale_switch') }}">
+                        <button type="submit"
+                                class="inline-flex items-center justify-center p-1 rounded hover:opacity-75 transition focus:outline-none cursor-pointer"
+                                aria-label="{{ switchLabel }}"
+                                title="{{ switchLabel }}">
+                            {{ include('partials/icons/flag-' ~ otherLocale ~ '.html.twig', {class: 'w-8 h-6'}) }}
+                        </button>
+                    </form>
+                </div>
+
                 {% set links = social_links() %}
                 {% if links is not empty %}
                     <div class="flex items-center justify-center space-x-4">

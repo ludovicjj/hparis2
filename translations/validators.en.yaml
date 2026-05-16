@@ -1,0 +1,11 @@
+contact:
+    email:
+        required: "Please enter your email."
+        invalid: "Please enter a valid email address."
+    subject:
+        required: "Please enter a subject."
+        too_long: "The subject cannot exceed {{ limit }} characters."
+    message:
+        required: "Please enter a message."
+        too_short: "The message must be at least {{ limit }} characters long."
+        too_long: "The message cannot exceed {{ limit }} characters."
