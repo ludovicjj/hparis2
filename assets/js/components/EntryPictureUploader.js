@@ -1,6 +1,6 @@
 import Sortable from 'sortablejs';
 
-export class VideoPictureUploader {
+export class EntryPictureUploader {
     constructor(container) {
         this.container = container;
         this.uploadUrl = container.dataset.uploadUrl;

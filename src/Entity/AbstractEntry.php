@@ -33,6 +33,9 @@ abstract class AbstractEntry
     #[ORM\Column(options: ['default' => true])]
     protected bool $visibility = true;
 
+    #[ORM\Column(options: ['default' => false])]
+    protected bool $isDraft = false;
+
     #[ORM\Column(length: 255, nullable: true)]
     protected ?string $token = null;
 
@@ -187,6 +190,18 @@ abstract class AbstractEntry
     public function setVisibility(bool $visibility): static
     {
         $this->visibility = $visibility;
+
+        return $this;
+    }
+
+    public function isDraft(): bool
+    {
+        return $this->isDraft;
+    }
+
+    public function setIsDraft(bool $isDraft): static
+    {
+        $this->isDraft = $isDraft;
 
         return $this;
     }

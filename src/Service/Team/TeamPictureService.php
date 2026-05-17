@@ -80,6 +80,10 @@ readonly class TeamPictureService
             ->setPosition($this->repository->getNextPositionByTeam($team))
             ->setCreatedBy($this->security->getUser());
 
+        if ($team->isDraft()) {
+            $team->setIsDraft(false);
+        }
+
         $this->entityManager->persist($picture);
         $this->entityManager->flush();
 

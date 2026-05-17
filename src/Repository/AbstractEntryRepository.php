@@ -17,6 +17,7 @@ abstract class AbstractEntryRepository extends ServiceEntityRepository
     public function findAllOrdered(): array
     {
         return $this->createQueryBuilder('e')
+            ->where('e.isDraft = false')
             ->orderBy('e.position', 'ASC')
             ->getQuery()
             ->getResult();
@@ -30,6 +31,7 @@ abstract class AbstractEntryRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('e')
             ->where('e.active = true')
             ->andWhere('e.visibility = true')
+            ->andWhere('e.isDraft = false')
             ->orderBy('e.position', 'ASC')
             ->getQuery()
             ->getResult();

@@ -80,6 +80,10 @@ readonly class OptionPictureService
             ->setPosition($this->repository->getNextPositionByOption($option))
             ->setCreatedBy($this->security->getUser());
 
+        if ($option->isDraft()) {
+            $option->setIsDraft(false);
+        }
+
         $this->entityManager->persist($picture);
         $this->entityManager->flush();
 
