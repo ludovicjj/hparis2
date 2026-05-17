@@ -58,27 +58,29 @@
                             </div>
                         {% endif %}
 
-                        <button type="button"
-                                class="{% if team.title or team.description %}mt-6{% endif %} group relative aspect-video bg-gray-900 overflow-hidden rounded-lg shadow-sm cursor-pointer"
-                                data-video-embed
-                                data-embed-url="{{ team.provider.embedUrl(team.externalId) }}"
-                                data-video-title="{{ team.title ?: 'Vidéo' }}"
-                                aria-label="Lire la vidéo{{ team.title ? ' : ' ~ team.title : '' }}">
-                            {% if thumbnailUrl %}
-                                <img src="{{ thumbnailUrl }}"
-                                     alt=""
-                                     loading="lazy"
-                                     onerror="this.style.display='none'"
-                                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
-                            {% endif %}
-                            <div class="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition flex items-center justify-center">
-                                <span class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/90 group-hover:bg-white shadow-lg transition-transform group-hover:scale-110">
-                                    <svg class="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M8 5v14l11-7z"/>
-                                    </svg>
-                                </span>
-                            </div>
-                        </button>
+                        {% if team.provider %}
+                            <button type="button"
+                                    class="{% if team.title or team.description %}mt-6{% endif %} group relative aspect-video bg-gray-900 overflow-hidden rounded-lg shadow-sm cursor-pointer"
+                                    data-video-embed
+                                    data-embed-url="{{ team.provider.embedUrl(team.externalId) }}"
+                                    data-video-title="{{ team.title ?: 'Vidéo' }}"
+                                    aria-label="Lire la vidéo{{ team.title ? ' : ' ~ team.title : '' }}">
+                                {% if thumbnailUrl %}
+                                    <img src="{{ thumbnailUrl }}"
+                                         alt=""
+                                         loading="lazy"
+                                         onerror="this.style.display='none'"
+                                         class="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
+                                {% endif %}
+                                <div class="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition flex items-center justify-center">
+                                    <span class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/90 group-hover:bg-white shadow-lg transition-transform group-hover:scale-110">
+                                        <svg class="w-8 h-8 text-gray-900 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M8 5v14l11-7z"/>
+                                        </svg>
+                                    </span>
+                                </div>
+                            </button>
+                        {% endif %}
 
                         {% set pictures = picturesByTeamId[team.id] ?? [] %}
                         {% if pictures is not empty %}

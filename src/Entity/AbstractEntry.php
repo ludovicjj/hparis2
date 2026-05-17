@@ -39,10 +39,10 @@ abstract class AbstractEntry
     #[ORM\Column(options: ['default' => 0])]
     protected int $position = 0;
 
-    #[ORM\Column(length: 100)]
+    #[ORM\Column(length: 100, nullable: true)]
     protected ?string $externalId = null;
 
-    #[ORM\Column(length: 32, enumType: VideoProvider::class)]
+    #[ORM\Column(length: 32, nullable: true, enumType: VideoProvider::class)]
     protected ?VideoProvider $provider = null;
 
     #[ORM\Column]
@@ -147,7 +147,7 @@ abstract class AbstractEntry
         return $this->provider;
     }
 
-    public function setProvider(VideoProvider $provider): static
+    public function setProvider(?VideoProvider $provider): static
     {
         $this->provider = $provider;
 
@@ -159,7 +159,7 @@ abstract class AbstractEntry
         return $this->externalId;
     }
 
-    public function setExternalId(string $externalId): static
+    public function setExternalId(?string $externalId): static
     {
         $this->externalId = $externalId;
 

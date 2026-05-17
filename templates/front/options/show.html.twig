@@ -47,14 +47,16 @@
             {% endif %}
         </div>
 
-        <div class="aspect-video bg-gray-900 overflow-hidden rounded-lg shadow-sm">
-            <iframe src="{{ option.provider.embedUrl(option.externalId) }}"
-                    title="{{ option.title ?: 'Vidéo' }}"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerpolicy="strict-origin-when-cross-origin"
-                    allowfullscreen
-                    class="w-full h-full border-0"></iframe>
-        </div>
+        {% if option.provider %}
+            <div class="aspect-video bg-gray-900 overflow-hidden rounded-lg shadow-sm">
+                <iframe src="{{ option.provider.embedUrl(option.externalId) }}"
+                        title="{{ option.title ?: 'Vidéo' }}"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen
+                        class="w-full h-full border-0"></iframe>
+            </div>
+        {% endif %}
 
         {% if option.description %}
             <div class="mt-6 text-sm md:text-base text-gray-600

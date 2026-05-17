@@ -50,6 +50,7 @@ class OptionType extends AbstractType
             ])
             ->add('url', UrlType::class, [
                 'label' => 'Lien de la vidéo',
+                'required' => false,
                 'attr' => [
                     'placeholder' => 'https://www.youtube.com/watch?v=...',
                 ],
@@ -80,6 +81,11 @@ class OptionType extends AbstractType
                         $this->videoThumbnailResolver->resolve($parsed['provider'], $parsed['externalId'])
                     );
                 }
+            } else {
+                $option
+                    ->setProvider(null)
+                    ->setExternalId(null)
+                    ->setThumbnailUrl(null);
             }
 
             if ($option->getDescription() !== null) {

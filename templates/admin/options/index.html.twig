@@ -53,9 +53,11 @@
                             <div class="text-white font-medium truncate">
                                 {{ option.title ?: '(sans titre)' }}
                             </div>
-                            <a href="{{ option.url }}" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition text-xs truncate block">
-                                {{ option.url }}
-                            </a>
+                            {% if option.url %}
+                                <a href="{{ option.url }}" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition text-xs truncate block">
+                                    {{ option.url }}
+                                </a>
+                            {% endif %}
                         </div>
 
                         {% if not option.visibility %}
@@ -64,9 +66,11 @@
                             </svg>
                         {% endif %}
 
-                        <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300 capitalize">
-                            {{ option.provider.label }}
-                        </span>
+                        {% if option.provider %}
+                            <span class="shrink-0 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300 capitalize">
+                                {{ option.provider.label }}
+                            </span>
+                        {% endif %}
 
                         <form method="post" action="{{ path('app_admin_options_toggle', {id: option.id}) }}" class="shrink-0">
                             <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ option.id) }}">
@@ -107,9 +111,11 @@
                                 <div class="text-white font-medium truncate mb-1">
                                     {{ option.title ?: '(sans titre)' }}
                                 </div>
-                                <a href="{{ option.url }}" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition text-xs truncate block">
-                                    {{ option.url }}
-                                </a>
+                                {% if option.url %}
+                                    <a href="{{ option.url }}" target="_blank" rel="noopener" class="text-purple-400 hover:text-purple-300 transition text-xs truncate block">
+                                        {{ option.url }}
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
                         <div class="flex items-center justify-between">
@@ -119,9 +125,11 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                                     </svg>
                                 {% endif %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300 capitalize">
-                                    {{ option.provider.label }}
-                                </span>
+                                {% if option.provider %}
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-700 text-slate-300 capitalize">
+                                        {{ option.provider.label }}
+                                    </span>
+                                {% endif %}
                                 <form method="post" action="{{ path('app_admin_options_toggle', {id: option.id}) }}">
                                     <input type="hidden" name="_token" value="{{ csrf_token('toggle' ~ option.id) }}">
                                     <button type="submit" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium transition cursor-pointer

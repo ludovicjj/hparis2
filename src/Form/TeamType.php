@@ -50,6 +50,7 @@ class TeamType extends AbstractType
             ])
             ->add('url', UrlType::class, [
                 'label' => 'Lien de la vidéo',
+                'required' => false,
                 'attr' => [
                     'placeholder' => 'https://www.youtube.com/watch?v=...',
                 ],
@@ -80,6 +81,11 @@ class TeamType extends AbstractType
                         $this->videoThumbnailResolver->resolve($parsed['provider'], $parsed['externalId'])
                     );
                 }
+            } else {
+                $team
+                    ->setProvider(null)
+                    ->setExternalId(null)
+                    ->setThumbnailUrl(null);
             }
 
             if ($team->getDescription() !== null) {
