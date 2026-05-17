@@ -6,7 +6,6 @@ use App\Entity\Option;
 use App\Form\OptionType;
 use App\Repository\OptionPictureRepository;
 use App\Repository\OptionRepository;
-use App\Service\JsonFormHandler;
 use App\Service\Option\OptionPictureService;
 use App\Service\Option\OptionService;
 use App\Service\S3Service;
@@ -36,24 +35,49 @@ class OptionsController extends AbstractController
     }
 
     #[Route('/create', name: 'create', methods: ['GET'])]
-    public function create(): Response
-    {
-        $form = $this->createForm(OptionType::class, new Option());
+    public function create(
+        OptionRepository $optionRepository,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $draft = $optionRepository->findOneBy(['isDraft' => true]);
 
-        return $this->render('admin/options/create.html.twig', [
-            'form' => $form,
-            'maxPictures' => OptionPictureService::MAX_PICTURES_PER_OPTION,
-        ]);
+        if ($draft === null) {
+            $draft = new Option()
+                ->setIsDraft(true)
+                ->setVisibility(false)
+                ->setPosition($optionRepository->getNextPosition());
+
+            $entityManager->persist($draft);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_admin_options_update', ['id' => $draft->getId()]);
     }
 
-    #[Route('/{id}/update', name: 'update', methods: ['GET'])]
+    #[Route('/{id}/update', name: 'update', methods: ['GET', 'POST'])]
     public function update(
+        Request $request,
         Option $option,
+        EntityManagerInterface $entityManager,
         OptionService $optionService,
         OptionPictureRepository $optionPictureRepository,
         S3Service $s3Service,
     ): Response {
         $form = $this->createForm(OptionType::class, $option);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $wasDraft = $option->isDraft();
+            if ($wasDraft) {
+                $option->setIsDraft(false);
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', $wasDraft ? 'Option ajoutée avec succès.' : 'Option modifiée avec succès.');
+
+            return $this->redirectToRoute('app_admin_options_index');
+        }
 
         $optionPictures = array_map(
             fn ($picture) => [
@@ -69,56 +93,6 @@ class OptionsController extends AbstractController
             'front_option_url' => $optionService->generatePublicUrl($option),
             'optionPictures' => $optionPictures,
             'maxPictures' => OptionPictureService::MAX_PICTURES_PER_OPTION,
-        ]);
-    }
-
-    #[Route('/create-stub', name: 'create_stub', methods: ['POST'])]
-    public function createStub(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        OptionRepository $optionRepository,
-        JsonFormHandler $formHandler,
-    ): JsonResponse {
-        $option = new Option();
-        $form = $this->createForm(OptionType::class, $option);
-
-        if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
-            return $errorResponse;
-        }
-
-        $option->setPosition($optionRepository->getNextPosition());
-
-        $entityManager->persist($option);
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Option ajoutée avec succès.');
-
-        return $this->json([
-            'id' => $option->getId(),
-            'redirectUrl' => $this->generateUrl('app_admin_options_update', ['id' => $option->getId()]),
-        ]);
-    }
-
-    #[Route('/{id}/update-stub', name: 'update_stub', methods: ['POST'])]
-    public function updateStub(
-        Request $request,
-        Option $option,
-        EntityManagerInterface $entityManager,
-        JsonFormHandler $formHandler,
-    ): JsonResponse {
-        $form = $this->createForm(OptionType::class, $option);
-
-        if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
-            return $errorResponse;
-        }
-
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Option modifiée avec succès.');
-
-        return $this->json([
-            'id' => $option->getId(),
-            'redirectUrl' => $this->generateUrl('app_admin_options_index'),
         ]);
     }
 

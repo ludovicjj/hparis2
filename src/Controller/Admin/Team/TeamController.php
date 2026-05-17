@@ -6,7 +6,6 @@ use App\Entity\Team;
 use App\Form\TeamType;
 use App\Repository\TeamPictureRepository;
 use App\Repository\TeamRepository;
-use App\Service\JsonFormHandler;
 use App\Service\S3Service;
 use App\Service\Team\TeamPictureService;
 use App\Service\Team\TeamService;
@@ -36,24 +35,49 @@ class TeamController extends AbstractController
     }
 
     #[Route('/create', name: 'create', methods: ['GET'])]
-    public function create(): Response
-    {
-        $form = $this->createForm(TeamType::class, new Team());
+    public function create(
+        TeamRepository $teamRepository,
+        EntityManagerInterface $entityManager,
+    ): Response {
+        $draft = $teamRepository->findOneBy(['isDraft' => true]);
 
-        return $this->render('admin/team/create.html.twig', [
-            'form' => $form,
-            'maxPictures' => TeamPictureService::MAX_PICTURES_PER_TEAM,
-        ]);
+        if ($draft === null) {
+            $draft = new Team()
+                ->setIsDraft(true)
+                ->setVisibility(false)
+                ->setPosition($teamRepository->getNextPosition());
+
+            $entityManager->persist($draft);
+            $entityManager->flush();
+        }
+
+        return $this->redirectToRoute('app_admin_team_update', ['id' => $draft->getId()]);
     }
 
-    #[Route('/{id}/update', name: 'update', methods: ['GET'])]
+    #[Route('/{id}/update', name: 'update', methods: ['GET', 'POST'])]
     public function update(
+        Request $request,
         Team $team,
+        EntityManagerInterface $entityManager,
         TeamService $teamService,
         TeamPictureRepository $teamPictureRepository,
         S3Service $s3Service,
     ): Response {
         $form = $this->createForm(TeamType::class, $team);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $wasDraft = $team->isDraft();
+            if ($wasDraft) {
+                $team->setIsDraft(false);
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', $wasDraft ? 'Team ajoutée avec succès.' : 'Team modifiée avec succès.');
+
+            return $this->redirectToRoute('app_admin_team_index');
+        }
 
         $teamPictures = array_map(
             fn ($picture) => [
@@ -69,55 +93,6 @@ class TeamController extends AbstractController
             'front_team_url' => $teamService->generatePublicUrl($team),
             'teamPictures' => $teamPictures,
             'maxPictures' => TeamPictureService::MAX_PICTURES_PER_TEAM,
-        ]);
-    }
-
-    #[Route('/create-stub', name: 'create_stub', methods: ['POST'])]
-    public function createStub(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        TeamRepository $teamRepository,
-        JsonFormHandler $formHandler,
-    ): JsonResponse {
-        $team = new Team();
-        $form = $this->createForm(TeamType::class, $team);
-
-        if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
-            return $errorResponse;
-        }
-        $team->setPosition($teamRepository->getNextPosition());
-
-        $entityManager->persist($team);
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Team ajoutée avec succès.');
-
-        return $this->json([
-            'id' => $team->getId(),
-            'redirectUrl' => $this->generateUrl('app_admin_team_update', ['id' => $team->getId()]),
-        ]);
-    }
-
-    #[Route('/{id}/update-stub', name: 'update_stub', methods: ['POST'])]
-    public function updateStub(
-        Request $request,
-        Team $team,
-        EntityManagerInterface $entityManager,
-        JsonFormHandler $formHandler,
-    ): JsonResponse {
-        $form = $this->createForm(TeamType::class, $team);
-
-        if ($errorResponse = $formHandler->getValidationErrorResponse($form, $request)) {
-            return $errorResponse;
-        }
-
-        $entityManager->flush();
-
-        $this->addFlash('success', 'Team modifiée avec succès.');
-
-        return $this->json([
-            'id' => $team->getId(),
-            'redirectUrl' => $this->generateUrl('app_admin_team_index'),
         ]);
     }
 

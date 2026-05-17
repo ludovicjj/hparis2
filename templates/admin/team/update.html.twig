@@ -48,12 +48,7 @@
             </div>
         </div>
 
-        {{ form_start(form, {
-            'action': path('app_admin_team_update_stub', {id: team.id}),
-            'attr': {
-                'data-async-form': '',
-            }
-        }) }}
+        {{ form_start(form) }}
         <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6">
             <div class="mb-6">
                 <a href="{{ path('app_admin_team_index') }}" class="text-purple-400 hover:text-purple-300 transition">
@@ -104,7 +99,7 @@
 
         {# Images carousel #}
         <div class="bg-slate-900 rounded-xl p-6 border border-slate-700 mb-6"
-             data-video-picture-uploader
+             data-entry-picture-uploader
              data-upload-url="{{ path('app_admin_api_team_picture_upload', {id: team.id}) }}"
              data-reorder-url="{{ path('app_admin_api_team_picture_reorder', {id: team.id}) }}"
              data-delete-url-template="{{ path('app_admin_api_team_picture_delete', {id: '__ID__'}) }}"
